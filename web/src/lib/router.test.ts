@@ -1,5 +1,5 @@
 import { expect, it } from 'vitest';
-import { hrefOf, parseRoute } from './router';
+import { hrefOf, parseRoute, type Route } from './router';
 
 it('parses and builds routes', () => {
   expect(parseRoute('/')).toEqual({ name: 'overview' });
@@ -16,4 +16,16 @@ it('parses and builds routes', () => {
   expect(parseRoute('/api-tokens')).toEqual({ name: 'apiTokens' });
   expect(hrefOf({ name: 'pages', id: 'new' })).toBe('/pages/new');
   expect(hrefOf({ name: 'incidents', id: 3 })).toBe('/incidents/3');
+  expect(parseRoute('/monitors/007')).toEqual({ name: 'notFound' });
+  expect(parseRoute('/monitors/7/edit/x')).toEqual({ name: 'notFound' });
+  const routes: Route[] = [
+    { name: 'settings' },
+    { name: 'monitor', id: 7 },
+    { name: 'monitorNew' },
+    { name: 'monitorEdit', id: 7 },
+    { name: 'maintenance' },
+    { name: 'maintenanceNew' },
+    { name: 'maintenanceEdit', id: 3 },
+  ];
+  for (const route of routes) expect(parseRoute(hrefOf(route))).toEqual(route);
 });

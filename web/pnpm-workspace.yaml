@@ -1,0 +1,8 @@
+# @uwusuite/design comes as a GitHub release tarball, not from npm, so pnpm's
+# minimumReleaseAge check cannot look it up there and fails a fresh install.
+minimumReleaseAgeExclude:
+  - '@uwusuite/design'
+
+# rolldown 1.2.18 ships a binary that dies with "Illegal instruction" on older x64 CPUs (this host).
+overrides:
+  rolldown: 1.2.16

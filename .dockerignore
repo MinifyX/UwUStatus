@@ -1,0 +1,11 @@
+target
+data
+secrets
+.env
+.git
+.github
+docs
+tests
+**/*.md
+web/node_modules
+web/dist

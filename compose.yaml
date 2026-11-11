@@ -1,0 +1,42 @@
+# UwUStatus hinter Caddy. Konfiguration in .env (Vorlage: .env.example), Geheimnisse als Dateien in
+# ./secrets/ (chmod 600). Fehlt eine optionale Datei, legt `touch` sie leer an: leer heißt aus.
+services:
+  uwustatus:
+    image: ghcr.io/minifyx/uwustatus:latest
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    container_name: uwustatus
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      UWUSTATUS_DATA_DIR: /data
+      UWUSTATUS_BIND: 0.0.0.0:8080
+      UWUSTATUS_OIDC_CLIENT_SECRET_FILE: /run/secrets/oidc_client_secret
+      UWUSTATUS_ADMIN_PASSWORD_FILE: /run/secrets/admin_password
+      UWUSTATUS_ADMIN_TOTP_SECRET_FILE: /run/secrets/admin_totp
+    secrets:
+      - oidc_client_secret
+      - admin_password
+      - admin_totp
+    volumes:
+      - ./data:/data
+    ports:
+      - "127.0.0.1:8080:8080"
+    read_only: true
+    tmpfs:
+      - /tmp:size=16m
+    cap_drop: [ALL]
+    security_opt:
+      - no-new-privileges:true
+    user: "10001:10001"
+    mem_limit: 256m
+    pids_limit: 128
+
+secrets:
+  oidc_client_secret:
+    file: ./secrets/oidc_client_secret
+  admin_password:
+    file: ./secrets/admin_password
+  admin_totp:
+    file: ./secrets/admin_totp

@@ -1,0 +1,28 @@
+[workspace]
+resolver = "3"
+members = [
+    "crates/uwustatus-server",
+    # Being built in parallel as standalone crates; enable once they are in and drop `exclude`.
+    # "crates/uwustatus-probe",
+    # "crates/uwustatus-tunnel",
+]
+# Until then they stay outside, so `cargo` inside them does not trip over this workspace.
+exclude = ["crates/uwustatus-probe", "crates/uwustatus-tunnel"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.89"
+license = "AGPL-3.0-only"
+publish = false
+
+[profile.dev]
+debug = "line-tables-only"
+
+[profile.dev.package."*"]
+debug = false
+
+[profile.release]
+codegen-units = 1
+lto = "thin"
+strip = true

@@ -1,0 +1,47 @@
+[package]
+name = "uwustatus-server"
+description = "UwUStatus: Uptime-Monitoring der UwUSuite mit Statusseiten"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[[bin]]
+name = "uwustatus"
+path = "src/main.rs"
+
+[dependencies]
+argon2 = { version = "0.5", default-features = false, features = ["alloc", "password-hash", "std"] }
+axum = { version = "0.8", default-features = false, features = ["http1", "json", "query", "tokio"] }
+base64 = "0.22"
+data-encoding = "2"
+hmac = "0.12"
+jiff = { version = "0.2", default-features = false, features = ["std"] }
+jsonwebtoken = { version = "11", default-features = false, features = ["aws_lc_rs"] }
+rand = "0.9"
+reqwest = { version = "0.13", default-features = false, features = ["rustls", "json", "query", "form"] }
+rusqlite = { version = "0.40", features = ["bundled"] }
+rust-embed = { version = "8", features = ["mime-guess"] }
+rustix = { version = "1", default-features = false, features = ["std", "process", "fs"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+sha1 = "0.10"
+sha2 = "0.10"
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "net", "time", "sync", "signal"] }
+tower = { version = "0.5", default-features = false, features = ["util"] }
+tower-http = { version = "0.6", features = ["timeout"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", default-features = false, features = ["env-filter", "fmt", "ansi"] }
+url = "2"
+
+[dev-dependencies]
+aws-lc-rs = "1"
+tempfile = "3"
+
+[[test]]
+name = "integration"
+path = "tests/integration/main.rs"
+
+[lints.rust]
+unsafe_code = "deny"

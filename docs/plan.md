@@ -48,7 +48,7 @@ der Totmann.
 
 ## Phasen
 
-1. [ ] Gerüst: Workspace, CI (GitHub-hosted, Cache, concurrency), Dockerfile,
+1. [x] Gerüst: Workspace, CI (GitHub-hosted, Cache, concurrency), Dockerfile,
        Web-Gerüst aus UwUDNS (OIDC, Session, i18n), lokaler Admin.
 2. [ ] `uwustatus-probe` mit allen Typen + Tests gegen lokale Fakes.
 3. [ ] Planer, Zustandsmaschine (Wiederholungen, Quorum, Eltern, Wartung),

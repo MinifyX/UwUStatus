@@ -1,0 +1,25 @@
+# syntax=docker/dockerfile:1.7
+#
+# Packages the binaries CI built before: dist/amd64/uwustatus and dist/arm64/uwustatus.
+# docker/Dockerfile builds the same image from source.
+
+# The preparation runs on the machine that builds, whatever the image is for: it only copies and
+# sets modes, so nothing has to be emulated.
+FROM --platform=$BUILDPLATFORM debian:trixie-slim@sha256:a99cfc517144bc59b1978475ec53b46ecabec7e43635402ee5b77cc54cd1b20a AS prep
+ARG TARGETARCH
+COPY dist/${TARGETARCH}/uwustatus /usr/local/bin/uwustatus
+RUN chmod 755 /usr/local/bin/uwustatus && install -d -o 10001 -g 10001 /data
+
+FROM gcr.io/distroless/cc-debian13@sha256:159783207c2cd44c2aa5715961d13c8612368ac9bd450f887e3f08fc8ea461e3
+COPY --from=prep /usr/local/bin/uwustatus /usr/local/bin/uwustatus
+COPY --from=prep --chown=10001:10001 /data /data
+USER 10001:10001
+ENV UWUSTATUS_DATA_DIR=/data \
+    UWUSTATUS_BIND=0.0.0.0:8080 \
+    HOME=/data
+VOLUME /data
+EXPOSE 8080
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --start-interval=2s --retries=3 \
+    CMD ["/usr/local/bin/uwustatus", "healthcheck"]
+ENTRYPOINT ["/usr/local/bin/uwustatus"]
+CMD ["serve"]

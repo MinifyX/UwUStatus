@@ -1,0 +1,14 @@
+# Configuration for the secret scan workflow (.github/workflows/secret-scan.yml).
+# The default gitleaks rules stay on; only made-up secrets of the test fakes are allowed, each
+# spelled out. Never add a real secret here: a leaked secret has to be replaced, not allowed.
+
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Integration test fakes: made-up OIDC client secret, admin password, RFC 6238 TOTP test key"
+regexes = [
+  '''oidc-test-client-secret-0123456789''',
+  '''local-test-password-0123''',
+  '''GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ''',
+]

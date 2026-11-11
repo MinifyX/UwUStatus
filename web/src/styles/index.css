@@ -1,0 +1,21 @@
+@import 'tailwindcss';
+@import '@uwusuite/design/tailwind.css';
+
+@source '../';
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  background: var(--uwu-canvas);
+  color: var(--uwu-ink);
+  overflow-x: hidden;
+}
+
+/* Tabular figures wherever numbers line up (times, scores, sizes). */
+.num {
+  font-variant-numeric: tabular-nums;
+}

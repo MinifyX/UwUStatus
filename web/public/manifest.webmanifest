@@ -1,0 +1,10 @@
+{
+  "name": "UwUStatus",
+  "short_name": "UwUStatus",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#fff7fa",
+  "theme_color": "#ff6fa6",
+  "icons": [{ "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }]
+}

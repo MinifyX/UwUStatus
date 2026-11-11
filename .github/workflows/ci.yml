@@ -176,3 +176,35 @@ jobs:
         with:
           name: satellite-binaries
           path: dist-satellite
+
+  release:
+    name: GitHub release
+    needs: [image, satellite]
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: satellite-binaries
+          path: dist-satellite
+      - name: Package satellite and publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          for arch in amd64 arm64; do
+            d="uwustatus-satellite-$TAG-linux-$arch"
+            mkdir "$d"
+            cp "dist-satellite/linux_$arch/uwustatus-satellite" deploy/satellite/* "$d/"
+            chmod 0755 "$d/uwustatus-satellite" "$d/install.sh"
+            tar -czf "$d.tar.gz" "$d"
+          done
+          sha256sum uwustatus-satellite-*.tar.gz > SHA256SUMS
+          notes=$(awk -v v="## ${TAG#v}" '$0==v{f=1;next} /^## /{f=0} f' CHANGELOG.md)
+          pre=""; case "$TAG" in *-*) pre=--prerelease;; esac
+          gh release create "$TAG" $pre --title "UwUStatus ${TAG#v}" --notes "$notes" uwustatus-satellite-*.tar.gz SHA256SUMS

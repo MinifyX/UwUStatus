@@ -6,8 +6,8 @@ Notfall-Statusseite.
 
 ## Installation (Debian/Ubuntu, amd64 oder arm64)
 
-1. Binary aus dem CI-Artefakt `satellite-binaries` (`linux_amd64/` bzw. `linux_arm64/`) und
-   den Inhalt von `deploy/satellite/` auf den Server kopieren.
+1. `uwustatus-satellite-<version>-linux-<arch>.tar.gz` aus dem GitHub-Release laden (enthält
+   Binary und `deploy/satellite/`), gegen `SHA256SUMS` prüfen und entpacken.
 2. `sudo ./install.sh ./uwustatus-satellite` – legt Benutzer, `/etc/uwustatus-satellite/satellite.toml`
    und den systemd-Dienst an und druckt den Kopplungscode.
 3. Vorher bzw. danach in `satellite.toml` `public_addresses` prüfen. Der Code enthält diese

@@ -17,7 +17,7 @@ axum = { version = "0.8", default-features = false, features = ["http1", "json",
 base64 = "0.22"
 data-encoding = "2"
 hmac = "0.12"
-jiff = { version = "0.2", default-features = false, features = ["std"] }
+jiff = { version = "0.2", default-features = false, features = ["std", "tz-system", "tzdb-bundle-always"] }
 jsonwebtoken = { version = "11", default-features = false, features = ["aws_lc_rs"] }
 rand = "0.9"
 reqwest = { version = "0.13", default-features = false, features = ["rustls", "json", "query", "form"] }
@@ -34,10 +34,12 @@ tower-http = { version = "0.6", features = ["timeout"] }
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", default-features = false, features = ["env-filter", "fmt", "ansi"] }
 url = "2"
+uwustatus-probe = { path = "../uwustatus-probe" }
 
 [dev-dependencies]
 aws-lc-rs = "1"
 tempfile = "3"
+tokio = { version = "1", features = ["test-util"] }
 
 [[test]]
 name = "integration"

@@ -1,14 +1,18 @@
 //! Shared state and the router (host dispatch: admin app vs. status pages).
 
+use crate::Clock;
 use crate::config::Config;
 use crate::db::Db;
+use crate::events::Event;
 use crate::oidc::Oidc;
+use crate::planner;
 use axum::Router;
 use axum::extract::{DefaultBodyLimit, Request};
 use axum::http::header;
 use axum::routing::{get, post};
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
+use tokio::sync::{broadcast, mpsc};
 use tower::ServiceExt as _;
 use tower_http::timeout::TimeoutLayer;
 
@@ -60,11 +64,36 @@ pub struct Inner {
     /// Last TOTP step used, against replays.
     // shortcut: in memory, so a restart allows one replay within 90 s; store it when that matters.
     pub totp_last_step: Mutex<i64>,
+    pub clock: Clock,
+    /// Phase 4/5 hook: `state.events.subscribe()`.
+    pub events: broadcast::Sender<Event>,
+    pub planner: mpsc::UnboundedSender<planner::Msg>,
+    /// Taken by `planner::spawn`.
+    pub planner_rx: Mutex<Option<mpsc::UnboundedReceiver<planner::Msg>>>,
+    /// Push calls, global.
+    // shortcut: one global window (20/s on average); per token when someone pushes that often.
+    pub pushes: Limiter,
+}
+
+impl Inner {
+    /// Monitors changed; the planner re-reads them.
+    pub fn reload_planner(&self) {
+        let _ = self.planner.send(planner::Msg::Reload);
+    }
+
+    /// Next local run (or push deadline) of a monitor.
+    pub fn plan(&self, id: i64, at: i64) {
+        let _ = self.planner.send(planner::Msg::Due { id, at });
+    }
 }
 
 pub type AppState = Arc<Inner>;
 
 pub fn build(config: Config, db: Db) -> Result<AppState, String> {
+    build_with_clock(config, db, Clock::System)
+}
+
+pub fn build_with_clock(config: Config, db: Db, clock: Clock) -> Result<AppState, String> {
     let http = reqwest::Client::builder()
         .user_agent(concat!("UwUStatus/", env!("CARGO_PKG_VERSION")))
         .timeout(Duration::from_secs(20))
@@ -72,6 +101,7 @@ pub fn build(config: Config, db: Db) -> Result<AppState, String> {
         .redirect(reqwest::redirect::Policy::none())
         .build()
         .map_err(|e| format!("HTTP-Client: {e}"))?;
+    let (planner, planner_rx) = mpsc::unbounded_channel();
     Ok(Arc::new(Inner {
         oidc: config.oidc.clone().map(|c| Oidc::new(http.clone(), c)),
         http,
@@ -80,12 +110,17 @@ pub fn build(config: Config, db: Db) -> Result<AppState, String> {
         callbacks: Limiter::new(20),
         local_failures: Limiter::new(10),
         totp_last_step: Mutex::new(0),
+        clock,
+        events: broadcast::channel(crate::events::BUS).0,
+        planner,
+        planner_rx: Mutex::new(Some(planner_rx)),
+        pushes: Limiter::new(1200),
     }))
 }
 
 /// The admin app: `/api/*` plus the SPA. Later phases add their routes to `api`.
 fn admin_router(state: &AppState) -> Router<AppState> {
-    use crate::{auth, local, settings, web};
+    use crate::{auth, events, history, local, maintenance, monitors, settings, web};
     let api = Router::new()
         .route("/auth/methods", get(auth::methods))
         .route("/auth/login", get(auth::login))
@@ -94,6 +129,13 @@ fn admin_router(state: &AppState) -> Router<AppState> {
         .route("/auth/logout", post(auth::logout))
         .route("/me", get(auth::me))
         .route("/settings", get(settings::get).put(settings::put))
+        .route("/monitors", get(monitors::list).post(monitors::create))
+        .route("/monitors/{id}", get(monitors::get).put(monitors::update).delete(monitors::delete))
+        .route("/monitors/{id}/history", get(history::history))
+        .route("/monitors/{id}/events", get(events::list))
+        .route("/overview", get(history::overview))
+        .route("/maintenance", get(maintenance::list).post(maintenance::create))
+        .route("/maintenance/{id}", get(maintenance::get).put(maintenance::update).delete(maintenance::delete))
         .fallback(web::api_not_found);
     Router::new()
         .nest("/api", api)
@@ -116,6 +158,8 @@ pub fn router(state: AppState) -> Router {
     let admin_host = state.config.public_authority();
     Router::new()
         .route("/healthz", get(crate::web::healthz))
+        // Services push from anywhere: every host, no session, no CSRF check.
+        .route("/api/push/{token}", get(crate::monitors::push).post(crate::monitors::push))
         .fallback(move |request: Request| {
             let target = if authority(&request).is_some_and(|h| h.eq_ignore_ascii_case(&admin_host)) {
                 admin.clone()

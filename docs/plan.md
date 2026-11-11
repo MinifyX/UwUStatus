@@ -51,7 +51,7 @@ der Totmann.
 1. [x] Gerüst: Workspace, CI (GitHub-hosted, Cache, concurrency), Dockerfile,
        Web-Gerüst aus UwUDNS (OIDC, Session, i18n), lokaler Admin.
 2. [x] `uwustatus-probe` mit allen Typen + Tests gegen lokale Fakes.
-3. [ ] Planer, Zustandsmaschine (Wiederholungen, Quorum, Eltern, Wartung),
+3. [x] Planer, Zustandsmaschine (Wiederholungen, Quorum, Eltern, Wartung),
        Speicherung + Verdichtung.
 4. [ ] Alarm-Kanäle.
 5. [ ] Statusseiten, Vorfälle, RSS, Badges, API, `/metrics`.

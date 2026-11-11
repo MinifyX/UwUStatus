@@ -16,11 +16,13 @@ pub struct Settings {
     pub retention_raw_days: u32,
     pub retention_hourly_days: u32,
     pub retention_daily_days: u32,
+    /// Interval for new monitors that do not set one.
+    pub default_interval_s: u32,
 }
 
 impl Default for Settings {
     fn default() -> Self {
-        Self { retention_raw_days: 7, retention_hourly_days: 90, retention_daily_days: 365 }
+        Self { retention_raw_days: 7, retention_hourly_days: 90, retention_daily_days: 365, default_interval_s: 60 }
     }
 }
 
@@ -39,6 +41,7 @@ pub struct Update {
     retention_raw_days: Option<u32>,
     retention_hourly_days: Option<u32>,
     retention_daily_days: Option<u32>,
+    default_interval_s: Option<u32>,
 }
 
 pub async fn get(State(state): State<AppState>, _: Authed) -> Json<Settings> {
@@ -58,6 +61,12 @@ pub async fn put(State(state): State<AppState>, user: Authed, Body(update): Body
             }
             *target = days;
         }
+    }
+    if let Some(interval) = update.default_interval_s {
+        if !(10..=86400).contains(&interval) {
+            return Err(ApiError::invalid("Standard-Intervall: 10 s bis 1 Tag"));
+        }
+        s.default_interval_s = interval;
     }
     if !(s.retention_raw_days <= s.retention_hourly_days && s.retention_hourly_days <= s.retention_daily_days) {
         return Err(ApiError::invalid("Aufbewahrung: Rohdaten ≤ Stundenwerte ≤ Tageswerte"));

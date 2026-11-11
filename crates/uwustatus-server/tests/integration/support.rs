@@ -5,6 +5,7 @@ use axum::http::{Request, StatusCode, header};
 use serde_json::{Value, json};
 use std::sync::OnceLock;
 use tower::ServiceExt as _;
+use uwustatus_server::Clock;
 use uwustatus_server::app::{self, AppState};
 use uwustatus_server::config::{AdminConfig, Config, OidcConfig, Secret};
 use uwustatus_server::db::Db;
@@ -54,10 +55,19 @@ pub async fn env() -> Env {
 }
 
 pub async fn env_with(tweak: impl FnOnce(&mut Config)) -> Env {
+    env_full(tweak, Clock::System).await
+}
+
+/// Time from tokio's clock starting at `unix` (pair with `#[tokio::test(start_paused = true)]`).
+pub async fn env_at(unix: i64) -> Env {
+    env_full(|_| {}, Clock::tokio(unix)).await
+}
+
+async fn env_full(tweak: impl FnOnce(&mut Config), clock: Clock) -> Env {
     let fake = fakes::start().await;
     let mut config = config(&fake);
     tweak(&mut config);
-    let state = app::build(config, Db::open_in_memory().unwrap()).unwrap();
+    let state = app::build_with_clock(config, Db::open_in_memory().unwrap(), clock).unwrap();
     Env { router: app::router(state.clone()), fake, state }
 }
 
@@ -111,6 +121,21 @@ impl Env {
         *self.fake.claims.lock().unwrap() = claims;
         let uri = format!("/api/auth/callback?code=c0de&state={}", query["state"]);
         self.send("GET", &uri, Some(&format!("{LOGIN}={login}")), None).await
+    }
+
+    /// Local admin login (no network, so it also works with paused time).
+    pub async fn admin(&self) -> String {
+        let body = json!({ "user": "admin", "password": ADMIN_PASSWORD });
+        let reply = self.send("POST", "/api/auth/local", None, Some(body)).await;
+        assert_eq!(reply.status, StatusCode::NO_CONTENT, "{:?}", reply.body);
+        format!("{SESSION}={}", set_cookie(&reply, SESSION).unwrap())
+    }
+
+    /// `POST /api/monitors`, expecting 201; returns the monitor.
+    pub async fn monitor(&self, cookie: &str, body: Value) -> Value {
+        let reply = self.send("POST", "/api/monitors", Some(cookie), Some(body)).await;
+        assert_eq!(reply.status, StatusCode::CREATED, "{:?}", reply.body);
+        reply.body
     }
 
     /// OIDC login as an allowed subject; returns the session cookie.

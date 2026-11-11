@@ -4,9 +4,16 @@ pub mod app;
 pub mod auth;
 pub mod config;
 pub mod db;
+pub mod engine;
 pub mod error;
+pub mod events;
+pub mod history;
+pub mod ingest;
 pub mod local;
+pub mod maintenance;
+pub mod monitors;
 pub mod oidc;
+pub mod planner;
 pub mod settings;
 pub mod status;
 pub mod web;
@@ -17,6 +24,28 @@ use sha2::Digest as _;
 /// Unix seconds.
 pub fn now() -> i64 {
     jiff::Timestamp::now().as_second()
+}
+
+/// Where the core gets "now" from: the system, or tokio's clock (paused in tests) from a fixed start.
+#[derive(Clone, Copy, Debug)]
+pub enum Clock {
+    System,
+    Tokio { unix: i64, start: tokio::time::Instant },
+}
+
+impl Clock {
+    /// Follows `tokio::time`, starting at `unix`; with `tokio::time::pause()` time only moves
+    /// when the runtime is idle or on `advance`.
+    pub fn tokio(unix: i64) -> Self {
+        Clock::Tokio { unix, start: tokio::time::Instant::now() }
+    }
+
+    pub fn now(&self) -> i64 {
+        match self {
+            Clock::System => now(),
+            Clock::Tokio { unix, start } => unix + start.elapsed().as_secs() as i64,
+        }
+    }
 }
 
 /// Unix seconds as RFC 3339 (UTC).

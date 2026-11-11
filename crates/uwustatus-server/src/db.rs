@@ -5,7 +5,8 @@ use std::path::Path;
 use std::sync::Mutex;
 
 /// Append only: entry `n` takes the schema from version `n` to `n + 1`. Never edit a released one.
-const MIGRATIONS: &[&str] = &["
+const MIGRATIONS: &[&str] = &[
+    "
 CREATE TABLE sessions (
     id_hash TEXT PRIMARY KEY,
     sub TEXT NOT NULL,
@@ -27,7 +28,88 @@ CREATE TABLE settings (
     key TEXT PRIMARY KEY,
     value TEXT NOT NULL
 );
-"];
+",
+    "
+CREATE TABLE satellites (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'pending',
+    created INTEGER NOT NULL,
+    last_seen INTEGER
+);
+CREATE TABLE monitors (
+    id INTEGER PRIMARY KEY,
+    config TEXT NOT NULL,
+    push_token TEXT UNIQUE,
+    created INTEGER NOT NULL,
+    updated INTEGER NOT NULL
+);
+CREATE TABLE monitor_state (
+    monitor_id INTEGER PRIMARY KEY REFERENCES monitors (id) ON DELETE CASCADE,
+    state TEXT NOT NULL,
+    reason TEXT NOT NULL DEFAULT '',
+    since INTEGER NOT NULL,
+    via_parent INTEGER NOT NULL DEFAULT 0,
+    last_at INTEGER,
+    latency_ms INTEGER,
+    message TEXT,
+    version TEXT,
+    cert_days_left INTEGER,
+    cert_warned INTEGER NOT NULL DEFAULT 0,
+    last_reminder INTEGER
+);
+CREATE TABLE location_state (
+    monitor_id INTEGER NOT NULL REFERENCES monitors (id) ON DELETE CASCADE,
+    location TEXT NOT NULL,
+    state TEXT NOT NULL,
+    failures INTEGER NOT NULL,
+    at INTEGER NOT NULL,
+    message TEXT NOT NULL,
+    PRIMARY KEY (monitor_id, location)
+);
+CREATE TABLE results (
+    id INTEGER PRIMARY KEY,
+    monitor_id INTEGER NOT NULL REFERENCES monitors (id) ON DELETE CASCADE,
+    location TEXT NOT NULL,
+    seq INTEGER,
+    at INTEGER NOT NULL,
+    status TEXT NOT NULL,
+    latency_ms INTEGER NOT NULL,
+    message TEXT NOT NULL,
+    details TEXT NOT NULL,
+    UNIQUE (location, seq)
+);
+CREATE INDEX results_monitor_at ON results (monitor_id, at);
+CREATE INDEX results_at ON results (at);
+CREATE TABLE rollups (
+    monitor_id INTEGER NOT NULL REFERENCES monitors (id) ON DELETE CASCADE,
+    period TEXT NOT NULL,
+    start INTEGER NOT NULL,
+    up INTEGER NOT NULL,
+    degraded INTEGER NOT NULL,
+    down INTEGER NOT NULL,
+    latency_avg REAL,
+    latency_p95 INTEGER,
+    uptime REAL,
+    PRIMARY KEY (monitor_id, period, start)
+);
+CREATE TABLE events (
+    id INTEGER PRIMARY KEY,
+    monitor_id INTEGER NOT NULL REFERENCES monitors (id) ON DELETE CASCADE,
+    at INTEGER NOT NULL,
+    kind TEXT NOT NULL,
+    from_value TEXT NOT NULL,
+    to_value TEXT NOT NULL,
+    reason TEXT NOT NULL
+);
+CREATE INDEX events_monitor_at ON events (monitor_id, kind, at);
+CREATE INDEX events_at ON events (at);
+CREATE TABLE maintenance (
+    id INTEGER PRIMARY KEY,
+    config TEXT NOT NULL
+);
+",
+];
 
 pub struct Db(Mutex<Connection>);
 

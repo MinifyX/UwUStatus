@@ -16,4 +16,5 @@ export interface Settings {
   retention_raw_days: number;
   retention_hourly_days: number;
   retention_daily_days: number;
+  default_interval_s: number;
 }

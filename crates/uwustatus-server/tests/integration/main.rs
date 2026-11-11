@@ -3,4 +3,8 @@
 mod auth;
 mod basics;
 mod fakes;
+mod history;
+mod ingest;
+mod monitors;
+mod planner;
 mod support;

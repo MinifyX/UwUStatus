@@ -24,8 +24,8 @@ ENV CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER=aarch64-linux-gnu-gcc \
     CC_aarch64_unknown_linux_gnu=aarch64-linux-gnu-gcc \
     AR_aarch64_unknown_linux_gnu=aarch64-linux-gnu-ar
 # The cached target directory may hold an older build that looks current, so the crate is touched.
-RUN --mount=type=cache,target=/usr/local/cargo/registry \
-    --mount=type=cache,target=/usr/local/cargo/git \
+RUN --mount=type=cache,target=/usr/local/cargo/registry,sharing=locked \
+    --mount=type=cache,target=/usr/local/cargo/git,sharing=locked \
     --mount=type=cache,target=/src/target,id=satellite-target-${TARGETARCH} \
     touch crates/uwustatus-satellite/src/main.rs \
  && cargo build --release --locked -p uwustatus-satellite --target "$(cat /target)" \

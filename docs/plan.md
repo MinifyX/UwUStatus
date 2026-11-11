@@ -56,13 +56,17 @@ der Totmann.
 4. [x] Alarm-Kanäle (`uwustatus-notify`, Dispatcher, Seite „Benachrichtigungen“).
 5. [x] Statusseiten, Vorfälle, RSS, Badges, API, `/metrics`.
 6. [x] Tunnel + Satellit + Totmann + Notfall-Statusseite, Packaging wie Gateway.
-7. [ ] Web-UI komplett (Dashboard, Monitore, Kanäle, Seiten, Wartung,
-       Satelliten, Einstellungen). **Kern fertig** (Shell, Übersicht, Monitor-Detail +
-       -Formular, Wartung, Einstellungen, PWA, `pnpm dev:mock`); Kanäle, Seiten,
-       Vorfälle, API-Tokens und Satelliten hängen ihre Seiten per NAV-Zeile ein.
-8. [ ] `docs/healthz.md` + Einbau in Mail, Auth, Lock, Sync, DNS, Clip,
+7. [x] Web-UI komplett (Dashboard, Monitore, Kanäle, Seiten, Vorfälle, Wartung,
+       Satelliten, API-Tokens, Einstellungen), PWA, `pnpm dev:mock`.
+8. [x] `docs/healthz.md` + Einbau in Mail, Auth, Lock, Sync, DNS, Clip,
        je Patch-Release.
-9. [ ] Security-Review, Release 0.1.0, Deploy mfxdocker2 (Admin intern über
-       caddy-internal, status.minifyx.de öffentlich), Satellit auf dem
-       Gateway-VPS, Kuma abschalten, Produktlisten (Website, Profil-README,
-       mfxweb).
+9. [x] Security-Review, Release 0.1.0, Deploy mfxdocker2 (Admin intern über
+       caddy-internal, status.minifyx.de öffentlich), Kuma abgeschaltet,
+       Produktlisten. Offen: Satellit auf dem Gateway-VPS (Installation durch
+       den Betreiber), OIDC/SMTP-Zugangsdaten.
+
+## Bekannte Grenzen (0.1.0)
+
+- Webhook-Ziele werden nicht gegen interne Adressen gesperrt (Admin-Funktion).
+- Laufende Wiederholungen gehen bei einem Neustart verloren.
+- Down → unknown → Up löst ggf. keinen Wieder-da-Alarm aus.

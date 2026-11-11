@@ -4,13 +4,30 @@
 import { useEffect, useState, type MouseEvent } from 'react';
 
 export type Route =
-  { name: 'overview' } | { name: 'settings' } | { name: 'notifications' } | { name: 'notFound' };
+  | { name: 'notifications' }
+  | { name: 'overview' }
+  | { name: 'settings' }
+  | { name: 'notFound' }
+  | { name: 'pages'; id?: number | 'new' }
+  | { name: 'incidents'; id?: number }
+  | { name: 'apiTokens' };
+
+const id = (part: string | undefined) => (part && /^[1-9]\d{0,15}$/.test(part) ? Number(part) : 0);
 
 export function parseRoute(pathname: string): Route {
   const parts = pathname.split('/').filter(Boolean);
   if (parts.length === 0) return { name: 'overview' };
   if (parts.length === 1 && parts[0] === 'settings') return { name: 'settings' };
   if (parts.length === 1 && parts[0] === 'notifications') return { name: 'notifications' };
+  if (parts.length === 1 && parts[0] === 'api-tokens') return { name: 'apiTokens' };
+  if (parts[0] === 'pages' && parts.length === 1) return { name: 'pages' };
+  if (parts[0] === 'pages' && parts.length === 2 && parts[1] === 'new')
+    return { name: 'pages', id: 'new' };
+  if (parts[0] === 'pages' && parts.length === 2 && id(parts[1]))
+    return { name: 'pages', id: id(parts[1]) };
+  if (parts[0] === 'incidents' && parts.length === 1) return { name: 'incidents' };
+  if (parts[0] === 'incidents' && parts.length === 2 && id(parts[1]))
+    return { name: 'incidents', id: id(parts[1]) };
   return { name: 'notFound' };
 }
 
@@ -23,6 +40,11 @@ export function hrefOf(route: Route): string {
       return '/settings';
     case 'notifications':
       return '/notifications';
+    case 'pages':
+    case 'incidents':
+      return route.id === undefined ? `/${route.name}` : `/${route.name}/${route.id}`;
+    case 'apiTokens':
+      return '/api-tokens';
   }
 }
 

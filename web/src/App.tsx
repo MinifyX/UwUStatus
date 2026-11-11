@@ -21,6 +21,9 @@ import { NotificationsPage } from './pages/Notifications';
 import { toasts, useAction, useResource } from './lib/hooks';
 import { useT, type Key, type Lang } from './lib/i18n';
 import { currentPath, hrefOf, navigate, useRoute, type Route } from './lib/router';
+import { ApiTokens } from './pages/ApiTokens';
+import { Incidents } from './pages/Incidents';
+import { StatusPages } from './pages/StatusPages';
 
 type Auth =
   | { state: 'loading' }
@@ -31,6 +34,9 @@ type Auth =
 const NAV: { route: Route; label: Key }[] = [
   { route: { name: 'overview' }, label: 'nav.overview' },
   { route: { name: 'notifications' }, label: 'nav.notifications' },
+  { route: { name: 'pages' }, label: 'nav.pages' },
+  { route: { name: 'incidents' }, label: 'nav.incidents' },
+  { route: { name: 'apiTokens' }, label: 'nav.apiTokens' },
   { route: { name: 'settings' }, label: 'nav.settings' },
 ];
 
@@ -311,6 +317,12 @@ function Page({ route }: { route: Route }) {
       return <SettingsPage />;
     case 'notifications':
       return <NotificationsPage />;
+    case 'pages':
+      return <StatusPages id={route.id} />;
+    case 'incidents':
+      return <Incidents id={route.id} />;
+    case 'apiTokens':
+      return <ApiTokens />;
     case 'notFound':
       return (
         <Empty

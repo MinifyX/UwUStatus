@@ -39,6 +39,7 @@ uwustatus-probe = { path = "../uwustatus-probe" }
 
 [dev-dependencies]
 aws-lc-rs = "1"
+roxmltree = "0.20"
 tempfile = "3"
 tokio = { version = "1", features = ["test-util"] }
 

@@ -122,7 +122,8 @@ pub fn build_with_clock(config: Config, db: Db, clock: Clock) -> Result<AppState
 
 /// The admin app: `/api/*` plus the SPA. Later phases add their routes to `api`.
 fn admin_router(state: &AppState) -> Router<AppState> {
-    use crate::{auth, events, history, local, maintenance, monitors, settings, web};
+    use crate::{api, auth, events, history, incidents, local, maintenance, monitors, pages, settings, web};
+    use axum::routing::{delete, put};
     let api = Router::new()
         .route("/auth/methods", get(auth::methods))
         .route("/auth/login", get(auth::login))
@@ -144,9 +145,21 @@ fn admin_router(state: &AppState) -> Router<AppState> {
         .route("/channels/{id}/log", get(crate::channels::log))
         .route("/monitors/{id}/channels", get(crate::channels::of_monitor_get).put(crate::channels::of_monitor_put))
         .route("/smtp", get(crate::channels::smtp_get).put(crate::channels::smtp_put))
+        // Phase 5: status pages, incidents, tokens, badges
+        .route("/pages", get(pages::list).post(pages::create))
+        .route("/pages/{id}", get(pages::get).put(pages::update).delete(pages::delete))
+        .route("/pages/{id}/logo", put(pages::put_logo).delete(pages::delete_logo))
+        .route("/incidents", get(incidents::list).post(incidents::create))
+        .route("/incidents/{id}", get(incidents::get).put(incidents::update).delete(incidents::delete))
+        .route("/incidents/{id}/updates", post(incidents::add))
+        .route("/incidents/{id}/updates/{uid}", put(incidents::edit_update))
+        .route("/tokens", get(api::list_tokens).post(api::create_token))
+        .route("/tokens/{id}", delete(api::delete_token))
+        .route("/monitors/{id}/badge", get(pages::get_badge).put(pages::put_badge))
         .fallback(web::api_not_found);
     Router::new()
         .nest("/api", api)
+        .route("/s/{*rest}", get(crate::status::preview))
         .fallback(web::assets)
         .layer(axum::middleware::from_fn_with_state(state.clone(), web::csrf))
 }
@@ -168,6 +181,7 @@ pub fn router(state: AppState) -> Router {
         .route("/healthz", get(crate::web::healthz))
         // Services push from anywhere: every host, no session, no CSRF check.
         .route("/api/push/{token}", get(crate::monitors::push).post(crate::monitors::push))
+        .merge(crate::api::routes())
         .fallback(move |request: Request| {
             let target = if authority(&request).is_some_and(|h| h.eq_ignore_ascii_case(&admin_host)) {
                 admin.clone()

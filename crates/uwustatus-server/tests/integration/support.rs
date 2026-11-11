@@ -37,6 +37,7 @@ pub fn config(fake: &FakeState) -> Config {
     Config {
         public_url: ORIGIN.into(),
         bind: "127.0.0.1:0".parse().unwrap(),
+        public_bind: None,
         data_dir: std::env::temp_dir(),
         oidc: Some(OidcConfig {
             issuer: format!("{}/oidc", fake.base),

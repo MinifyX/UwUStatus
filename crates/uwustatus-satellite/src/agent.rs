@@ -71,11 +71,7 @@ pub async fn start<N: DeadManNotifier>(config: &Config, timing: Timing, notifier
         let tcp = tokio::net::TcpListener::bind(address).await.map_err(|e| format!("{address}: {e}"))?;
         page = Some(tcp.local_addr().map_err(|e| e.to_string())?);
         let app = crate::page::router(live.clone(), image);
-        tasks.push(tokio::spawn(async move {
-            if let Err(e) = axum::serve(tcp, app).await {
-                tracing::error!("emergency page: {e}");
-            }
-        }));
+        tasks.push(tokio::spawn(crate::page::serve(tcp, app)));
     }
     let ctx = Arc::new(Ctx::new().map_err(|e| format!("Prüf-Kontext: {e}"))?);
     let notices = deadman::sender(notifier);
@@ -176,7 +172,7 @@ impl Loop {
                     self.live.get().config = Some(config.clone());
                     self.saved.dead_man = Some(config);
                 }
-                Err(e) => tracing::warn!("dead man config ignored: {e}"),
+                Err(e) => tracing::warn!(kind = ?e.classify(), "dead man config ignored"),
             },
         }
         None
@@ -253,7 +249,7 @@ async fn sleep_until(deadline: Option<Instant>) {
 async fn check_loop(assignment: Assignment, listener: Arc<SatelliteListener>, ctx: Arc<Ctx>, live: Arc<Live>) {
     let check: Check = match serde_json::from_value(assignment.check.clone()) {
         Ok(check) => check,
-        Err(e) => return tracing::warn!(id = %assignment.id, "check not understood: {e}"),
+        Err(e) => return tracing::warn!(id = %assignment.id, kind = ?e.classify(), "check not understood"),
     };
     // shortcut: no retry interval on satellites (the main instance's retries still count); send one along when needed.
     let mut ticks = tokio::time::interval(Duration::from_secs(u64::from(assignment.interval_s.max(5))));

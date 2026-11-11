@@ -38,17 +38,8 @@ impl Limiter {
     /// Counts one hit; `false` once the window is full.
     pub fn allow(&self) -> bool {
         let mut window = self.current();
-        window.1 += 1;
+        window.1 = window.1.saturating_add(1);
         window.1 <= self.max
-    }
-
-    /// Room left, without counting.
-    pub fn has_room(&self) -> bool {
-        self.current().1 < self.max
-    }
-
-    pub fn hit(&self) {
-        self.current().1 += 1;
     }
 }
 
@@ -59,7 +50,7 @@ pub struct Inner {
     pub http: reqwest::Client,
     /// OIDC callbacks, global.
     pub callbacks: Limiter,
-    /// Failed local logins, global (one admin, so per-IP buys nothing).
+    /// Local login attempts, global (one admin, so per-IP buys nothing).
     pub local_failures: Limiter,
     /// Last TOTP step used, against replays.
     // shortcut: in memory, so a restart allows one replay within 90 s; store it when that matters.
@@ -179,25 +170,48 @@ fn authority(request: &Request) -> Option<&str> {
         .or_else(|| request.uri().authority().map(|a| a.as_str()))
 }
 
-pub fn router(state: AppState) -> Router {
-    let admin = admin_router(&state).with_state(state.clone());
-    let status = crate::status::router().with_state(state.clone());
-    let admin_host = state.config.public_authority();
+/// Marks requests that came in on the public listener (`UWUSTATUS_PUBLIC_BIND`).
+#[derive(Clone, Copy)]
+pub struct PublicListener;
+
+/// Routes every host gets: health, push, read API, metrics, badges.
+fn shared() -> Router<AppState> {
     Router::new()
         .route("/healthz", get(crate::web::healthz))
         // Services push from anywhere: every host, no session, no CSRF check.
         .route("/api/push/{token}", get(crate::monitors::push).post(crate::monitors::push))
         .merge(crate::api::routes())
-        .fallback(move |request: Request| {
-            let target = if authority(&request).is_some_and(|h| h.eq_ignore_ascii_case(&admin_host)) {
-                admin.clone()
-            } else {
-                status.clone()
-            };
-            async move { target.oneshot(request).await }
-        })
+}
+
+fn finish(router: Router<AppState>, state: AppState) -> Router {
+    router
         .layer(axum::middleware::from_fn(crate::web::headers))
         .layer(DefaultBodyLimit::max(64 * 1024))
         .layer(TimeoutLayer::with_status_code(axum::http::StatusCode::REQUEST_TIMEOUT, Duration::from_secs(30)))
         .with_state(state)
+}
+
+/// Main listener: the admin host gets the app, every other host a status page.
+pub fn router(state: AppState) -> Router {
+    let admin = admin_router(&state).with_state(state.clone());
+    let status = crate::status::router().with_state(state.clone());
+    let admin_host = state.config.public_authority();
+    let router = shared().fallback(move |request: Request| {
+        let target = if authority(&request).is_some_and(|h| h.eq_ignore_ascii_case(&admin_host)) {
+            admin.clone()
+        } else {
+            status.clone()
+        };
+        async move { target.oneshot(request).await }
+    });
+    finish(router, state)
+}
+
+/// Public listener: status pages and the shared routes only. The admin app is not mounted at
+/// all, whatever `Host` says, so a proxy can forward everything public to this port.
+pub fn public_router(state: AppState) -> Router {
+    let router = shared()
+        .fallback_service(crate::status::router().with_state(state.clone()))
+        .layer(axum::Extension(PublicListener));
+    finish(router, state)
 }

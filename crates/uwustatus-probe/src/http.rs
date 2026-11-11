@@ -18,7 +18,7 @@ pub(crate) async fn http(c: &HttpCheck, ctx: &Ctx) -> Result<Outcome, String> {
     if let Some(body) = &c.body {
         req = req.body(body.clone());
     }
-    let resp = req.send().await.map_err(|e| err_chain(&e))?;
+    let resp = req.send().await.map_err(|e| err_chain(&e.without_url()))?;
     let code = resp.status().as_u16();
     let mut details = Details { http_status: Some(code), ..Details::default() };
     set_cert(
@@ -85,7 +85,7 @@ pub fn json_path<'a>(v: &'a Value, path: &str) -> Option<&'a Value> {
 /// Body lesen, nach `MAX_BODY` abschneiden.
 async fn read_body(mut resp: reqwest::Response) -> Result<Vec<u8>, String> {
     let mut buf = Vec::new();
-    while let Some(chunk) = resp.chunk().await.map_err(|e| err_chain(&e))? {
+    while let Some(chunk) = resp.chunk().await.map_err(|e| err_chain(&e.without_url()))? {
         let room = MAX_BODY - buf.len();
         buf.extend_from_slice(&chunk[..chunk.len().min(room)]);
         if buf.len() >= MAX_BODY {
@@ -96,7 +96,7 @@ async fn read_body(mut resp: reqwest::Response) -> Result<Vec<u8>, String> {
 }
 
 async fn get_json<T: for<'de> Deserialize<'de>>(ctx: &Ctx, url: &str) -> Result<(u16, Option<T>), String> {
-    let resp = ctx.http(true, false).get(url).send().await.map_err(|e| err_chain(&e))?;
+    let resp = ctx.http(true, false).get(url).send().await.map_err(|e| err_chain(&e.without_url()))?;
     let code = resp.status().as_u16();
     let body = read_body(resp).await?;
     Ok((code, serde_json::from_slice(&body).ok()))

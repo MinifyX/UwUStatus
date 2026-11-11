@@ -342,7 +342,11 @@ async fn tokens_scopes_and_read_api() {
     let list = env.send("GET", "/api/tokens", Some(&cookie), None).await;
     assert!(list.body[0]["last_used"].is_i64());
 
-    let summary = get("/api/v1/pages/main/summary", None).await;
+    // Only on the page's own host (or the admin host), not by slug through any other one.
+    assert_eq!(get("/api/v1/pages/main/summary", None).await.status, StatusCode::NOT_FOUND);
+    let admin_summary = env.send("GET", "/api/v1/pages/main/summary", None, None).await;
+    assert_eq!(admin_summary.status, StatusCode::OK);
+    let summary = env.get_on(PAGE_HOST, "/api/v1/pages/main/summary", &[]).await;
     assert_eq!(summary.status, StatusCode::OK);
     assert_eq!(summary.headers[header::ACCESS_CONTROL_ALLOW_ORIGIN], "*");
     assert_eq!(
@@ -393,4 +397,36 @@ async fn metrics_format() {
         assert!(series.starts_with("uwustatus_monitor_") && series.ends_with('}'), "{line}");
     }
     assert_eq!(body.matches("# TYPE ").count(), 5);
+}
+
+#[tokio::test]
+async fn public_listener_has_no_admin_app() {
+    let env = env().await;
+    let cookie = env.admin().await;
+    setup(&env).await;
+    let public = uwustatus_server::app::public_router(env.state.clone());
+    let call = |host: &str, method: &str, uri: &str| {
+        let request = Request::builder()
+            .method(method)
+            .uri(uri)
+            .header(header::HOST, host)
+            .header(header::ORIGIN, ORIGIN)
+            .header(header::COOKIE, &cookie)
+            .header(header::CONTENT_TYPE, "application/json")
+            .body(Body::from(json!({ "user": "admin", "password": ADMIN_PASSWORD }).to_string()))
+            .unwrap();
+        let public = public.clone();
+        async move { tower::ServiceExt::oneshot(public, request).await.unwrap().status() }
+    };
+    // Even with the admin host in the header: no API, no login, no preview.
+    for (method, uri) in
+        [("GET", "/api/me"), ("GET", "/api/monitors"), ("POST", "/api/auth/local"), ("GET", "/s/main/"), ("GET", "/")]
+    {
+        assert_eq!(call(HOST, method, uri).await, StatusCode::NOT_FOUND, "{method} {uri}");
+    }
+    assert_eq!(call(HOST, "GET", "/api/v1/pages/main/summary").await, StatusCode::NOT_FOUND);
+    assert_eq!(call(PAGE_HOST, "GET", "/").await, StatusCode::OK);
+    assert_eq!(call(PAGE_HOST, "GET", "/api/v1/pages/main/summary").await, StatusCode::OK);
+    assert_eq!(call(PAGE_HOST, "GET", "/api/me").await, StatusCode::NOT_FOUND);
+    assert_eq!(call(PAGE_HOST, "GET", "/healthz").await, StatusCode::OK);
 }

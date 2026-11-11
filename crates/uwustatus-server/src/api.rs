@@ -201,9 +201,21 @@ async fn monitor(
 }
 
 /// Public: what the page shows, as JSON (CORS open, so other sites can embed it).
-async fn summary(State(state): State<AppState>, Path(slug): Path<String>) -> Response {
+/// Only on the page's own domains (or the admin host on the main listener), so a page meant for
+/// an internal domain cannot be read by slug through a public host.
+async fn summary(
+    State(state): State<AppState>,
+    Path(slug): Path<String>,
+    headers: HeaderMap,
+    public: Option<axum::Extension<crate::app::PublicListener>>,
+) -> Response {
+    let host = headers.get(header::HOST).and_then(|h| h.to_str().ok()).unwrap_or_default();
+    let admin_host = public.is_none() && host.eq_ignore_ascii_case(&state.config.public_authority());
     let result = state.db.with(|c| {
         let Some(page) = pages::by_slug(c, &slug)? else { return Ok(None) };
+        if !admin_host && !page.config.domains.contains(&pages::normalize_host(host)) {
+            return Ok(None);
+        }
         let lang = page.config.lang;
         let v = crate::status::view(c, &state, &page, "", lang)?;
         let monitors: Vec<_> = v

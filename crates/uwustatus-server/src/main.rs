@@ -39,7 +39,7 @@ fn serve() -> Result<(), String> {
     let db = uwustatus_server::db::Db::open(&config.data_dir.join("uwustatus.sqlite3"))
         .map_err(|e| format!("SQLite: {e}"))?;
     runtime()?.block_on(async move {
-        let bind = config.bind;
+        let (bind, public_bind) = (config.bind, config.public_bind);
         let state = uwustatus_server::app::build(config, db)?;
         uwustatus_server::incidents::spawn(&state);
         uwustatus_server::planner::spawn(&state)?;
@@ -47,6 +47,16 @@ fn serve() -> Result<(), String> {
         uwustatus_server::satellites::start_all(&state);
         let listener = tokio::net::TcpListener::bind(bind).await.map_err(|e| format!("{bind}: {e}"))?;
         tracing::info!("listening on {bind}");
+        if let Some(public_bind) = public_bind {
+            let public = tokio::net::TcpListener::bind(public_bind).await.map_err(|e| format!("{public_bind}: {e}"))?;
+            tracing::info!("public status pages on {public_bind}");
+            let router = uwustatus_server::app::public_router(state.clone());
+            tokio::spawn(async move {
+                if let Err(e) = axum::serve(public, router).await {
+                    tracing::error!("public listener: {e}");
+                }
+            });
+        }
         let shutdown = async {
             let mut term = tokio::signal::unix::signal(tokio::signal::unix::SignalKind::terminate()).ok();
             tokio::select! {

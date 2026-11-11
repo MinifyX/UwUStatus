@@ -40,6 +40,7 @@ export const NAV: NavItem[] = [
   { route: { name: 'notifications' }, label: 'nav.notifications', icon: ICONS.notifications },
   { route: { name: 'pages' }, label: 'nav.pages', icon: ICONS.website },
   { route: { name: 'incidents' }, label: 'nav.incidents', icon: ICONS.warning },
+  { route: { name: 'satellites' }, label: 'nav.satellites', icon: ICONS.server },
   { route: { name: 'apiTokens' }, label: 'nav.apiTokens', icon: ICONS.secret },
   { route: { name: 'settings' }, label: 'nav.settings', icon: ICONS.settings },
 ];

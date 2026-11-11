@@ -231,6 +231,7 @@ pub async fn update(
     })?;
     let channel = result?;
     tracing::info!("channel {id} changed by {}", user.actor());
+    state.satellites.refresh(&state.db);
     Ok(Json(channel))
 }
 
@@ -239,6 +240,7 @@ pub async fn delete(State(state): State<AppState>, user: Authed, Path(id): Path<
         return Err(not_found());
     }
     tracing::info!("channel {id} deleted by {}", user.actor());
+    state.satellites.refresh(&state.db);
     Ok(StatusCode::NO_CONTENT)
 }
 

@@ -99,6 +99,29 @@ async fn quorum_and_seq_dedup() {
 }
 
 #[tokio::test]
+async fn stale_satellite_leaves_the_quorum() {
+    let env = env().await;
+    let cookie = env.admin().await;
+    env.state
+        .db
+        .with(|c| c.execute_batch("INSERT INTO satellites (id, name, created) VALUES ('sat-a', 'A', 0);"))
+        .unwrap();
+    let mut m = tcp("Web");
+    m["locations"] = json!(["local", "sat-a"]);
+    m["quorum"] = json!("all");
+    m["interval_s"] = json!(60);
+    let id = env.monitor(&cookie, m).await["id"].as_i64().unwrap();
+    let ingest = |loc, seq, at, status| ingest_result(&env.state, id, loc, seq, at, &outcome(status)).unwrap();
+
+    ingest("sat-a", Some(1), 100, Status::Up);
+    ingest("local", None, 200, Status::Down);
+    assert_eq!(state_of(&env, id), "degraded");
+    // sat-a silent for more than 3 intervals: unknown, only local counts.
+    ingest("local", None, 281, Status::Down);
+    assert_eq!(state_of(&env, id), "down");
+}
+
+#[tokio::test]
 async fn parent_down_masks_child() {
     let env = env().await;
     let cookie = env.admin().await;

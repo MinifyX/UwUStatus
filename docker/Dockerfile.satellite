@@ -1,0 +1,49 @@
+# syntax=docker/dockerfile:1.7
+#
+# The satellite for Debian 12 (bookworm, glibc 2.36), amd64 and arm64. The compiler always runs
+# natively on the build machine and cross-compiles for arm64, nothing is emulated.
+#
+#   Binaries:  docker buildx build -f docker/Dockerfile.satellite --platform linux/amd64,linux/arm64 \
+#                --target bin --output type=local,dest=dist .
+#   Image:     docker buildx build -f docker/Dockerfile.satellite -t uwustatus-satellite .
+
+FROM --platform=$BUILDPLATFORM rust:1-slim-bookworm AS build
+ARG TARGETARCH
+RUN case "$TARGETARCH" in \
+      amd64) echo x86_64-unknown-linux-gnu > /target ;; \
+      arm64) echo aarch64-unknown-linux-gnu > /target \
+             && apt-get update && apt-get install -y --no-install-recommends gcc-aarch64-linux-gnu libc6-dev-arm64-cross \
+             && rm -rf /var/lib/apt/lists/* ;; \
+      *) echo "unsupported: $TARGETARCH" >&2; exit 1 ;; \
+    esac
+WORKDIR /src
+COPY Cargo.toml Cargo.lock rust-toolchain.toml ./
+RUN rustup target add "$(cat /target)"
+COPY crates/ crates/
+ENV CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER=aarch64-linux-gnu-gcc \
+    CC_aarch64_unknown_linux_gnu=aarch64-linux-gnu-gcc \
+    AR_aarch64_unknown_linux_gnu=aarch64-linux-gnu-ar
+# The cached target directory may hold an older build that looks current, so the crate is touched.
+RUN --mount=type=cache,target=/usr/local/cargo/registry \
+    --mount=type=cache,target=/usr/local/cargo/git \
+    --mount=type=cache,target=/src/target,id=satellite-target-${TARGETARCH} \
+    touch crates/uwustatus-satellite/src/main.rs \
+ && cargo build --release --locked -p uwustatus-satellite --target "$(cat /target)" \
+ && install -m 755 "target/$(cat /target)/release/uwustatus-satellite" /uwustatus-satellite \
+ && install -d -m 700 /state
+
+# Just the binary, for `--output type=local` (install.sh and the systemd unit).
+FROM scratch AS bin
+COPY --from=build /uwustatus-satellite /uwustatus-satellite
+
+# The image: distroless on Debian 12, no shell, unprivileged. UDP 7843 for the tunnel, 8090 for
+# the emergency page (when the main instance switches it on).
+FROM gcr.io/distroless/cc-debian12:nonroot
+COPY --from=build /uwustatus-satellite /usr/local/bin/uwustatus-satellite
+COPY --from=build --chown=65532:65532 /state /var/lib/uwustatus-satellite
+ENV UWUSTATUS_SATELLITE_STATE_DIR=/var/lib/uwustatus-satellite \
+    UWUSTATUS_SATELLITE_EMERGENCY__LISTEN=0.0.0.0:8090
+VOLUME /var/lib/uwustatus-satellite
+EXPOSE 7843/udp 8090
+ENTRYPOINT ["/usr/local/bin/uwustatus-satellite"]
+CMD ["run"]

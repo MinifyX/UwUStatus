@@ -336,7 +336,7 @@ export async function mockRequest(method: string, path: string, body?: unknown):
   }
   if (p === '/api/overview') return ok(monitors.map(overview));
   if (p === '/api/satellites')
-    return ok([{ id: 'sat-1', name: 'VPS Frankfurt', status: 'online' }]);
+    return ok([{ id: 'sat-1', name: 'VPS Frankfurt', region: 'EU', status: 'paired' }]);
   if (p === '/api/channels') return ok(channels);
   if (p.startsWith('/api/channels/') && p.endsWith('/log')) return ok([]);
 

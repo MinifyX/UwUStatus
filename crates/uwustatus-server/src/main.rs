@@ -44,6 +44,7 @@ fn serve() -> Result<(), String> {
         uwustatus_server::incidents::spawn(&state);
         uwustatus_server::planner::spawn(&state)?;
         uwustatus_server::alerts::spawn(&state);
+        uwustatus_server::satellites::start_all(&state);
         let listener = tokio::net::TcpListener::bind(bind).await.map_err(|e| format!("{bind}: {e}"))?;
         tracing::info!("listening on {bind}");
         let shutdown = async {

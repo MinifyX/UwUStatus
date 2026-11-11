@@ -74,12 +74,14 @@ pub struct Inner {
     // shortcut: one global window (20/s on average); per token when someone pushes that often.
     pub pushes: Limiter,
     pub alerts: crate::alerts::Alerts,
+    pub satellites: crate::satellites::Registry,
 }
 
 impl Inner {
     /// Monitors changed; the planner re-reads them.
     pub fn reload_planner(&self) {
         let _ = self.planner.send(planner::Msg::Reload);
+        self.satellites.refresh(&self.db);
     }
 
     /// Next local run (or push deadline) of a monitor.
@@ -106,6 +108,7 @@ pub fn build_with_clock(config: Config, db: Db, clock: Clock) -> Result<AppState
     Ok(Arc::new(Inner {
         oidc: config.oidc.clone().map(|c| Oidc::new(http.clone(), c)),
         alerts: crate::alerts::Alerts::new(http.clone()),
+        satellites: Default::default(),
         http,
         config,
         db,
@@ -156,6 +159,9 @@ fn admin_router(state: &AppState) -> Router<AppState> {
         .route("/tokens", get(api::list_tokens).post(api::create_token))
         .route("/tokens/{id}", delete(api::delete_token))
         .route("/monitors/{id}/badge", get(pages::get_badge).put(pages::put_badge))
+        .route("/satellites", get(crate::satellites::list).post(crate::satellites::create))
+        .route("/satellites/dead-man", get(crate::satellites::dead_man_get).put(crate::satellites::dead_man_put))
+        .route("/satellites/{id}", put(crate::satellites::update).delete(crate::satellites::delete))
         .fallback(web::api_not_found);
     Router::new()
         .nest("/api", api)

@@ -1,0 +1,43 @@
+[package]
+name = "uwustatus-satellite"
+description = "UwUStatus-Satellit: prüft von einem zweiten Standort, mit Totmannschalter und Notfall-Statusseite"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+repository = "https://github.com/MinifyX/UwUStatus"
+
+[[bin]]
+name = "uwustatus-satellite"
+path = "src/main.rs"
+
+[lib]
+doctest = false
+
+[dependencies]
+axum = { version = "0.8", default-features = false, features = ["http1", "tokio"] }
+clap = { version = "4", features = ["derive", "env"] }
+figment = { version = "0.10", features = ["toml", "env"] }
+jiff = { version = "0.2", default-features = false, features = ["std"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "net", "time", "sync", "signal", "fs"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", default-features = false, features = ["env-filter", "fmt", "ansi"] }
+uwustatus-notify = { path = "../uwustatus-notify" }
+uwustatus-probe = { path = "../uwustatus-probe" }
+uwustatus-tunnel = { path = "../uwustatus-tunnel" }
+
+[dev-dependencies]
+axum = { version = "0.8", default-features = false, features = ["http1", "tokio", "json"] }
+reqwest = { version = "0.13", default-features = false, features = ["rustls"] }
+tempfile = "3"
+tokio = { version = "1", features = ["test-util"] }
+
+[[test]]
+name = "integration"
+path = "tests/integration/main.rs"
+
+[lints.rust]
+unsafe_code = "deny"

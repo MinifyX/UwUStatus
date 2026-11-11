@@ -20,6 +20,7 @@ pub mod oidc;
 pub mod pages;
 pub mod planner;
 pub mod render;
+pub mod satellites;
 pub mod settings;
 pub mod status;
 pub mod web;

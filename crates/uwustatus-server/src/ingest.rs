@@ -146,17 +146,24 @@ fn reevaluate_in(
     let id = monitor.id;
     let config = &monitor.config;
     ensure_state(c, id, at)?;
-    let mut stmt = c.prepare("SELECT location, state, failures, message FROM location_state WHERE monitor_id = ?1")?;
-    let rows: HashMap<String, (Loc, String)> = stmt
+    let mut stmt =
+        c.prepare("SELECT location, state, failures, message, at FROM location_state WHERE monitor_id = ?1")?;
+    let rows: HashMap<String, (Loc, String, i64)> = stmt
         .query_map([id], |r| {
-            Ok((r.get(0)?, (Loc { state: MonState::parse(&r.get::<_, String>(1)?), failures: r.get(2)? }, r.get(3)?)))
+            let loc = Loc { state: MonState::parse(&r.get::<_, String>(1)?), failures: r.get(2)? };
+            Ok((r.get(0)?, (loc, r.get(3)?, r.get(4)?)))
         })?
         .collect::<rusqlite::Result<_>>()?;
     let locations: Vec<LocInput> = config
         .locations
         .iter()
+        // Satellite locations gone quiet are `unknown`, not part of the quorum.
+        .filter(|name| {
+            *name == monitors::LOCAL
+                || rows.get(*name).is_none_or(|(_, _, last)| !engine::stale(*last, at, config.interval_s))
+        })
         .map(|name| {
-            let (loc, message) = rows.get(name).map_or((Loc::default(), ""), |(l, m)| (*l, m.as_str()));
+            let (loc, message) = rows.get(name).map_or((Loc::default(), ""), |(l, m, _)| (*l, m.as_str()));
             LocInput { name, loc, message }
         })
         .collect();

@@ -28,6 +28,7 @@ import { currentPath, useRoute, type Route } from './lib/router';
 import { ApiTokens } from './pages/ApiTokens';
 import { Incidents } from './pages/Incidents';
 import { StatusPages } from './pages/StatusPages';
+import { Satellites } from './pages/Satellites';
 
 type Auth =
   | { state: 'loading' }
@@ -213,6 +214,8 @@ function Page({ route, me }: { route: Route; me: Me }) {
       return <Incidents id={route.id} />;
     case 'apiTokens':
       return <ApiTokens />;
+    case 'satellites':
+      return <Satellites />;
     case 'notFound':
       return (
         <Empty

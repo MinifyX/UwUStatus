@@ -5,6 +5,7 @@ members = [
     "crates/uwustatus-probe",
     "crates/uwustatus-tunnel",
     "crates/uwustatus-notify",
+    "crates/uwustatus-satellite",
 ]
 
 [workspace.package]

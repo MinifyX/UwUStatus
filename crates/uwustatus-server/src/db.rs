@@ -187,6 +187,13 @@ CREATE TABLE api_tokens (
     last_used INTEGER
 );
 ",
+    // Migration 5: satellites (the code holds addresses and fingerprint).
+    "
+ALTER TABLE satellites ADD COLUMN region TEXT NOT NULL DEFAULT '';
+ALTER TABLE satellites ADD COLUMN code TEXT NOT NULL DEFAULT '';
+ALTER TABLE satellites ADD COLUMN fingerprint TEXT;
+ALTER TABLE satellites ADD COLUMN version TEXT;
+",
 ];
 
 pub struct Db(Mutex<Connection>);

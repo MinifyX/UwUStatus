@@ -14,6 +14,7 @@ it('parses and builds routes', () => {
   expect(parseRoute('/incidents/abc')).toEqual({ name: 'notFound' });
   expect(parseRoute('/incidents/3')).toEqual({ name: 'incidents', id: 3 });
   expect(parseRoute('/api-tokens')).toEqual({ name: 'apiTokens' });
+  expect(parseRoute(hrefOf({ name: 'satellites' }))).toEqual({ name: 'satellites' });
   expect(hrefOf({ name: 'pages', id: 'new' })).toBe('/pages/new');
   expect(hrefOf({ name: 'incidents', id: 3 })).toBe('/incidents/3');
   expect(parseRoute('/monitors/007')).toEqual({ name: 'notFound' });

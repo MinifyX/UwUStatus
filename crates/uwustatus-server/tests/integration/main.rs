@@ -8,5 +8,6 @@ mod history;
 mod ingest;
 mod monitors;
 mod planner;
+mod satellites;
 mod status_pages;
 mod support;

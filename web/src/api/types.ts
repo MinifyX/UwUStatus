@@ -233,9 +233,9 @@ export interface Maintenance extends MaintenanceInput {
   id: number;
 }
 
-/** From the satellites phase; only what the monitor form needs. */
+/** What the monitor form needs from `GET /api/satellites`. */
 export interface SatelliteRef {
-  id: string | number;
+  id: string;
   name: string;
   status?: string;
 }

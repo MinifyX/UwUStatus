@@ -110,6 +110,12 @@ pub fn retrying(loc: Loc) -> bool {
     loc.failures > 0 && loc.state != State::Down
 }
 
+/// A satellite location without a result for more than three intervals is `unknown`: it is left
+/// out of the quorum, so a dead satellite neither holds a monitor down nor up.
+pub fn stale(last_at: i64, now: i64, interval_s: u32) -> bool {
+    now - last_at > 3 * i64::from(interval_s.max(1))
+}
+
 pub struct LocInput<'a> {
     pub name: &'a str,
     pub loc: Loc,
@@ -218,6 +224,12 @@ mod tests {
 
     fn run(results: &[Status], retries: u32) -> Loc {
         results.iter().fold(Loc::default(), |l, s| step(l, *s, retries))
+    }
+
+    #[test]
+    fn stale_after_three_intervals() {
+        assert!(!stale(100, 280, 60));
+        assert!(stale(100, 281, 60));
     }
 
     #[test]

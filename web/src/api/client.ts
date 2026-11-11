@@ -104,15 +104,6 @@ export async function request<T>(method: Method, path: string, body?: unknown): 
 }
 
 /** `null` when the route does not exist (yet): phases that are not merged answer 404. */
-async function optional<T>(load: Promise<T>): Promise<T | null> {
-  try {
-    return await load;
-  } catch (error) {
-    if (error instanceof ApiError && error.status === 404) return null;
-    throw error;
-  }
-}
-
 /** The editable part of a monitor, as `PUT` wants it (it rejects unknown fields). */
 export function configOf(m: Monitor): MonitorConfig {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -165,8 +156,7 @@ export const api = {
     request<Maintenance>('PUT', `/api/maintenance/${id}`, input),
   deleteMaintenance: (id: number) => request<void>('DELETE', `/api/maintenance/${id}`),
 
-  // Built by the satellites phase; `null` until it is merged.
-  satellites: () => optional(request<SatelliteRef[]>('GET', '/api/satellites')),
+  satellites: () => request<SatelliteRef[]>('GET', '/api/satellites'),
 };
 
 /** Where the browser goes to sign in with UwUAuth; `next` is the path to come back to. */

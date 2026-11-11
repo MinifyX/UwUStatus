@@ -1,0 +1,20 @@
+# /etc/uwustatus-satellite/satellite.toml – Beispiel. Alle Felder sind optional.
+# Umgebungsvariablen überschreiben Werte: UWUSTATUS_SATELLITE_<FELD>, verschachtelt mit "__",
+# z. B. UWUSTATUS_SATELLITE_EMERGENCY__LISTEN=127.0.0.1:8090
+
+# UDP-Port des Tunnels (QUIC). In der Firewall eingehend freigeben.
+listen = "[::]:7843"
+state_dir = "/var/lib/uwustatus-satellite"
+
+# Öffentliche Adressen für den Kopplungscode. Leer = automatisch ermitteln.
+public_addresses = ["203.0.113.10", "2001:db8::10"]
+
+# Ergebnisse, die bei fehlender Verbindung gepuffert werden (älteste fallen raus).
+buffer_limit = 10000
+log = "info"
+
+[emergency]
+# Notfall-Statusseite, nur lokal; davor einen Reverse-Proxy (siehe Caddyfile).
+listen = "127.0.0.1:8090"
+# Optionales Logo als PNG.
+# image = "/etc/uwustatus-satellite/logo.png"

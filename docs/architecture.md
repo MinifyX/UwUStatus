@@ -170,3 +170,38 @@ Timeout, keine Redirects, Antworten höchstens 64 KiB gelesen, URLs nie in Fehle
 | GET | `/api/channels/{id}/log` | neueste zuerst |
 | GET, PUT | `/api/monitors/{id}/channels` | Liste von Kanal-IDs |
 | GET, PUT | `/api/smtp` | Passwort nur schreibbar (`password_set`); leerer `host` entfernt |
+
+## Satelliten (Phase 6)
+
+```
+Satellit (QUIC-Server, UDP 7843)  <── MainClient je Satellit (Hauptinstanz wählt sich ein)
+  Prüfungen nach Zuweisung ──> Ergebnisse mit seq ──> satellites::follow ──> ingest_result ──> ack
+  Totmann: keine Verbindung > after_s ──> uwustatus_notify::Sender an die übergebenen Targets
+  Notfall-Statusseite (127.0.0.1:8090) mit letztem bekannten Stand der übergebenen Monitore
+```
+
+- Kopplung: `uwustatus-satellite init` druckt einen einmaligen Code (Adressen, Fingerabdruck,
+  Token). `POST /api/satellites` legt den Satelliten `pending` an und verbindet; nach `Paired`
+  gilt er als `paired` und wird ab dann mit festem Fingerabdruck (`MainSettings::pinned`)
+  verbunden. Die Identität der Hauptinstanz liegt in `data_dir/tunnel-identity.json` (0600).
+- `satellites::start_all` beim Start; `Registry::refresh` schickt Zuweisungen (Monitore mit dem
+  Satelliten in `locations`, nicht pausiert) und Totmann-Konfig bei jeder Änderung an Monitoren,
+  Kanälen oder Totmann-Einstellungen neu. Der Tunnel cached beides und schickt es nach
+  Reconnect erneut.
+- Ergebnisse: Monitor muss den Standort führen, Meldung ≤ 1000 Zeichen, Zeit ≤ jetzt.
+  `UNIQUE(location, seq)` macht erneutes Senden nach Reconnect idempotent; `ack` bis zur
+  höchsten gespeicherten seq.
+- Veraltet: ein Standort ohne Ergebnis seit mehr als 3 × Intervall zählt als `unknown` und
+  fällt aus dem Quorum (`engine::stale`).
+- Totmann-Konfig (`settings.dead_man`): Kanal-IDs werden zu vollständigen `Target`s (mit
+  Geheimnissen und SMTP) und gehen über den gepinnten Tunnel an jeden Satelliten.
+
+| Tabelle | Inhalt |
+|---|---|
+| `satellites` (Migration 5) | `id` (Slug), `name`, `region`, `status` (`pending`/`paired`), `code`, `fingerprint`, `version`, `last_seen` |
+
+| Methode | Pfad | |
+|---|---|---|
+| GET, POST | `/api/satellites` | POST `{code, name, region}`; Liste mit `live` (verbunden, seit, Fehler, letztes Ergebnis) |
+| PUT, DELETE | `/api/satellites/{id}` | DELETE nur, wenn kein Monitor ihn mehr nutzt |
+| GET, PUT | `/api/satellites/dead-man` | `after_min` (0 = aus), `channel_ids`, Texte, Notfallseite |

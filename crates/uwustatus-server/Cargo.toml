@@ -36,11 +36,13 @@ tracing-subscriber = { version = "0.3", default-features = false, features = ["e
 url = "2"
 uwustatus-notify = { path = "../uwustatus-notify" }
 uwustatus-probe = { path = "../uwustatus-probe" }
+uwustatus-tunnel = { path = "../uwustatus-tunnel" }
 
 [dev-dependencies]
 aws-lc-rs = "1"
 roxmltree = "0.20"
 tempfile = "3"
+uwustatus-satellite = { path = "../uwustatus-satellite" }
 tokio = { version = "1", features = ["test-util"] }
 
 [[test]]

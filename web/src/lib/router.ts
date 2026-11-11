@@ -17,7 +17,8 @@ export type Route =
   | { name: 'pages'; id?: number | 'new' }
   | { name: 'incidents'; id?: number }
   | { name: 'apiTokens' }
-  | { name: 'notFound' };
+  | { name: 'notFound' }
+  | { name: 'satellites' };
 
 const ID = /^[1-9]\d{0,15}$/;
 
@@ -41,6 +42,7 @@ export function parseRoute(pathname: string): Route {
   if (a === 'pages' && id && !c) return { name: 'pages', id };
   if (a === 'incidents' && !b) return { name: 'incidents' };
   if (a === 'incidents' && id && !c) return { name: 'incidents', id };
+  if (a === 'satellites' && !b) return { name: 'satellites' };
   return { name: 'notFound' };
 }
 
@@ -70,6 +72,8 @@ export function hrefOf(route: Route): string {
       return route.id === undefined ? `/${route.name}` : `/${route.name}/${route.id}`;
     case 'apiTokens':
       return '/api-tokens';
+    case 'satellites':
+      return '/satellites';
   }
 }
 

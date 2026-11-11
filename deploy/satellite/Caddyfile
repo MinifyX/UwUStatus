@@ -1,0 +1,4 @@
+# Notfall-Statusseite des Satelliten. Die Domain muss zu "Notfall-Domain" in UwUStatus passen.
+notfall.example.com {
+	reverse_proxy 127.0.0.1:8090
+}

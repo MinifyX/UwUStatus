@@ -196,3 +196,12 @@ async fn healthz() {
     assert_eq!(h("/weird").await.status, Status::Down);
     assert_eq!(h("/html").await.message, "HTTP 502, no healthz JSON");
 }
+
+#[tokio::test]
+async fn error_message_leaves_out_the_url() {
+    let (closed, port) = crate::listener().await;
+    drop(closed);
+    let o = run_http(http(format!("http://127.0.0.1:{port}/hook?token=hidden-value"))).await;
+    assert_eq!(o.status, Status::Down);
+    assert!(!o.message.contains("hidden-value"), "{}", o.message);
+}

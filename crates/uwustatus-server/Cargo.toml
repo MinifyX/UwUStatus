@@ -21,7 +21,7 @@ jiff = { version = "0.2", default-features = false, features = ["std", "tz-syste
 jsonwebtoken = { version = "11", default-features = false, features = ["aws_lc_rs"] }
 rand = "0.9"
 reqwest = { version = "0.13", default-features = false, features = ["rustls", "json", "query", "form"] }
-rusqlite = { version = "0.40", features = ["bundled"] }
+rusqlite = { version = "0.41", features = ["bundled"] }
 rust-embed = { version = "8", features = ["mime-guess"] }
 rustix = { version = "1", default-features = false, features = ["std", "process", "fs"] }
 serde = { version = "1", features = ["derive"] }

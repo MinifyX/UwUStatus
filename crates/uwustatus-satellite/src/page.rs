@@ -3,12 +3,18 @@
 
 use std::fmt::Write as _;
 use std::sync::Arc;
+use std::time::Duration;
 
 use axum::Router;
 use axum::extract::State;
 use axum::http::{HeaderMap, HeaderValue, StatusCode, header};
 use axum::response::{IntoResponse, Response};
 use axum::routing::get;
+use hyper::server::conn::http1;
+use hyper_util::rt::{TokioIo, TokioTimer};
+use hyper_util::service::TowerToHyperService;
+use tokio::net::TcpListener;
+use tokio::sync::Semaphore;
 use uwustatus_probe::Status;
 
 use crate::{Live, utc};
@@ -24,6 +30,37 @@ pub fn router(live: Arc<Live>, image: Option<Vec<u8>>) -> Router {
         .route("/", get(index))
         .route("/image.png", get(picture))
         .with_state(Page { live, image: image.map(Arc::new) })
+}
+
+/// Open connections at most; one stranger must not use up the file descriptors the checks need.
+const MAX_CONNECTIONS: usize = 256;
+const HEADER_TIMEOUT: Duration = Duration::from_secs(10);
+const CONNECTION_TIMEOUT: Duration = Duration::from_secs(60);
+
+/// Like `axum::serve`, but with a header read timeout, a cap on connection lifetime and a cap on
+/// open connections (`axum::serve` sets no timer, so hyper's header timeout never runs).
+pub async fn serve(tcp: TcpListener, app: Router) {
+    let slots = Arc::new(Semaphore::new(MAX_CONNECTIONS));
+    loop {
+        let Ok(slot) = slots.clone().acquire_owned().await else { return };
+        let stream = match tcp.accept().await {
+            Ok((stream, _)) => stream,
+            Err(e) => {
+                tracing::debug!("emergency page accept: {e}");
+                tokio::time::sleep(Duration::from_millis(100)).await;
+                continue;
+            }
+        };
+        let service = TowerToHyperService::new(app.clone());
+        tokio::spawn(async move {
+            let connection = http1::Builder::new()
+                .timer(TokioTimer::new())
+                .header_read_timeout(HEADER_TIMEOUT)
+                .serve_connection(TokioIo::new(stream), service);
+            let _ = tokio::time::timeout(CONNECTION_TIMEOUT, connection).await;
+            drop(slot);
+        });
+    }
 }
 
 const CSP: &str = "default-src 'none'; style-src 'unsafe-inline'; img-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'";

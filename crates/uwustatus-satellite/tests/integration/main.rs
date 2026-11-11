@@ -157,3 +157,16 @@ async fn emergency_page_shows_own_results() {
     let english = client.get(&page).header("host", "status.example.com").header("accept-language", "en-GB,en;q=0.8");
     assert!(english.send().await.unwrap().text().await.unwrap().contains("Main instance unreachable since"));
 }
+
+#[tokio::test(start_paused = true)]
+async fn emergency_page_drops_a_client_that_never_finishes_its_headers() {
+    use tokio::io::{AsyncReadExt as _, AsyncWriteExt as _};
+    let tcp = tokio::net::TcpListener::bind((Ipv4Addr::LOCALHOST, 0)).await.unwrap();
+    let address = tcp.local_addr().unwrap();
+    tokio::spawn(uwustatus_satellite::page::serve(tcp, Router::new().route("/", get(|| async { "hi" }))));
+    let mut client = tokio::net::TcpStream::connect(address).await.unwrap();
+    client.write_all(b"GET / HTTP/1.1\r\nHost: status.example.com\r\n").await.unwrap();
+    let mut rest = Vec::new();
+    // Paused time jumps to the header timeout once everything waits; without one this never ends.
+    tokio::time::timeout(Duration::from_secs(30), client.read_to_end(&mut rest)).await.expect("still open").unwrap();
+}

@@ -147,13 +147,12 @@ pub fn uptime(db: &crate::db::Db, monitor_id: i64, from: i64, to: i64) -> rusqli
 
 /// `24h`, `7d`, … (1 hour to 10 years) in seconds.
 fn parse_range(s: &str) -> Option<i64> {
-    let (n, unit) = s.split_at(s.len().checked_sub(1)?);
-    let n: i64 = n.parse().ok().filter(|n| *n > 0)?;
-    let seconds = match unit {
-        "h" => n.checked_mul(HOUR)?,
-        "d" => n.checked_mul(DAY)?,
+    let (n, unit) = match (s.strip_suffix('h'), s.strip_suffix('d')) {
+        (Some(n), _) => (n, HOUR),
+        (_, Some(n)) => (n, DAY),
         _ => return None,
     };
+    let seconds = n.parse::<i64>().ok().filter(|n| *n > 0)?.checked_mul(unit)?;
     (seconds <= 3650 * DAY).then_some(seconds)
 }
 
@@ -373,7 +372,7 @@ mod tests {
     fn ranges() {
         assert_eq!(parse_range("24h"), Some(DAY));
         assert_eq!(parse_range("7d"), Some(7 * DAY));
-        for bad in ["", "h", "0d", "-1d", "5w", "99999d", "9999999999999999999h"] {
+        for bad in ["", "h", "0d", "-1d", "5w", "99999d", "9999999999999999999h", "1ä", "ä"] {
             assert_eq!(parse_range(bad), None, "{bad}");
         }
     }

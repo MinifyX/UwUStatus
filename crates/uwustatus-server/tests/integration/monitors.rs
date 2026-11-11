@@ -189,3 +189,15 @@ async fn history_and_events_api() {
     assert!(overview.body[0].get("cert_days_left").is_some());
     assert_eq!(env.send("GET", "/api/monitors/999/events", Some(&cookie), None).await.status, StatusCode::NOT_FOUND);
 }
+
+#[tokio::test]
+async fn unknown_push_tokens_do_not_use_up_the_limit() {
+    let env = env().await;
+    let cookie = env.admin().await;
+    let m = env.monitor(&cookie, json!({ "name": "Cron", "kind": "push", "interval_s": 300 })).await;
+    for _ in 0..1201 {
+        assert_eq!(env.send("GET", "/api/push/made-up", None, None).await.status, StatusCode::NOT_FOUND);
+    }
+    let ok = env.send("GET", &format!("/api/push/{}", m["push_token"].as_str().unwrap()), None, None).await;
+    assert_eq!(ok.status, StatusCode::OK, "{:?}", ok.body);
+}

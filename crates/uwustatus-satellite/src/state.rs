@@ -89,7 +89,12 @@ fn write_json<T: Serialize>(path: &Path, value: &T) -> io::Result<()> {
     use std::os::unix::fs::OpenOptionsExt as _;
     let bytes = serde_json::to_vec_pretty(value).map_err(io::Error::other)?;
     let temporary = path.with_extension("tmp");
-    let mut file = std::fs::OpenOptions::new().write(true).create(true).truncate(true).mode(0o600).open(&temporary)?;
+    // A leftover temporary file would keep its old mode, so start from a fresh one.
+    match std::fs::remove_file(&temporary) {
+        Err(e) if e.kind() != io::ErrorKind::NotFound => return Err(e),
+        _ => {}
+    }
+    let mut file = std::fs::OpenOptions::new().write(true).create_new(true).mode(0o600).open(&temporary)?;
     file.write_all(&bytes)?;
     file.sync_all()?;
     drop(file);
@@ -115,5 +120,17 @@ mod tests {
             let mode = std::fs::metadata(dir.path().join(file)).unwrap().permissions().mode();
             assert_eq!(mode & 0o777, 0o600, "{file}");
         }
+    }
+
+    #[test]
+    fn leftover_temporary_file_does_not_keep_its_mode() {
+        let dir = tempfile::tempdir().unwrap();
+        let store = Store::open(dir.path()).unwrap();
+        let leftover = dir.path().join("state.tmp");
+        std::fs::write(&leftover, "{}").unwrap();
+        std::fs::set_permissions(&leftover, std::fs::Permissions::from_mode(0o644)).unwrap();
+        store.save(&Saved::default()).unwrap();
+        let mode = std::fs::metadata(dir.path().join("state.json")).unwrap().permissions().mode();
+        assert_eq!(mode & 0o777, 0o600);
     }
 }

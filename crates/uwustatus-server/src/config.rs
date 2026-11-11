@@ -55,6 +55,8 @@ pub struct Config {
     /// Every other `Host` is treated as a status page.
     pub public_url: String,
     pub bind: SocketAddr,
+    /// Optional second listener with status pages, badges, push and `/api/v1` only (no admin app).
+    pub public_bind: Option<SocketAddr>,
     pub data_dir: PathBuf,
     pub oidc: Option<OidcConfig>,
     pub allowed_group: Option<String>,
@@ -129,6 +131,9 @@ impl Config {
             .unwrap_or_else(|| "0.0.0.0:8080".into())
             .parse()
             .map_err(|_| "UWUSTATUS_BIND: erwartet Adresse:Port")?;
+        let public_bind = var("UWUSTATUS_PUBLIC_BIND")
+            .map(|v| v.parse().map_err(|_| "UWUSTATUS_PUBLIC_BIND: erwartet Adresse:Port"))
+            .transpose()?;
         let (oidc, admin) = (oidc()?, admin()?);
         if oidc.is_none() && admin.is_none() {
             return Err(
@@ -138,6 +143,7 @@ impl Config {
         Ok(Self {
             public_url,
             bind,
+            public_bind,
             data_dir: var("UWUSTATUS_DATA_DIR").unwrap_or_else(|| "/data".into()).into(),
             oidc,
             allowed_group: var("UWUSTATUS_ALLOWED_GROUP"),

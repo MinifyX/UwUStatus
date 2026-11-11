@@ -341,9 +341,6 @@ pub async fn push(
     Path(token): Path<String>,
     Query(q): Query<PushQuery>,
 ) -> ApiResult<Json<Value>> {
-    if !state.pushes.allow() {
-        return Err(ApiError::rate_limited("Zu viele Push-Meldungen, bitte warten."));
-    }
     let status = match q.status.as_deref() {
         None | Some("") => Status::Up,
         Some(s) => crate::engine::parse_status(s).ok_or_else(|| ApiError::invalid("status: up, degraded oder down"))?,
@@ -360,6 +357,10 @@ pub async fn push(
     let message: String =
         q.msg.unwrap_or_default().chars().map(|c| if c.is_control() { ' ' } else { c }).take(300).collect();
     let monitor = state.db.with(|c| by_token(c, &token))?.ok_or_else(|| ApiError::not_found("Unbekanntes Token."))?;
+    // Only known tokens count, so a flood of made-up ones cannot block real pushes.
+    if !state.pushes.allow() {
+        return Err(ApiError::rate_limited("Zu viele Push-Meldungen, bitte warten."));
+    }
     if monitor.config.paused {
         return Ok(Json(json!({ "ok": false, "message": "Monitor pausiert." })));
     }

@@ -95,14 +95,16 @@ Auf jedem Host, ohne Session:
 | Methode | Pfad | |
 |---|---|---|
 | GET | `/api/v1/monitors`, `/api/v1/monitors/{id}` | Bearer-Token mit `read` |
-| GET | `/api/v1/pages/{slug}/summary` | öffentlich, `Access-Control-Allow-Origin: *` |
+| GET | `/api/v1/pages/{slug}/summary` | öffentlich, `Access-Control-Allow-Origin: *`; nur auf den Domains der Seite (oder dem Admin-Host) |
 | GET | `/metrics` | Bearer-Token mit `metrics`, Prometheus-Textformat |
 | GET | `/badge/{public_id}/status.svg\|uptime.svg?days=30\|latency.svg` | nur Monitore auf einer Seite oder mit `badge_public` |
 
 ## Statusseiten (Phase 5)
 
 - Host-Weiche: der Admin-Host (`public_url`) bekommt die App, jeder andere Host die Seite, deren
-  `domains` ihn enthalten (`pages::by_host`), sonst 404. Unter der Seite: `/`, `/history`,
+  `domains` ihn enthalten (`pages::by_host`), sonst 404. Mit `UWUSTATUS_PUBLIC_BIND` gibt es einen
+  zweiten Listener (`app::public_router`) ohne Admin-App: nur Statusseiten und die Routen „auf
+  jedem Host“; dorthin zeigt der öffentliche Proxy. Unter der Seite: `/`, `/history`,
   `/feed.atom`, `/feed.rss`, `/logo`, `/_status/*` (CSS, JS, Schrift aus `assets/status/`).
 - `render.rs` baut HTML ohne Templates; jeder Text aus der DB läuft durch `esc`. Keine Cookies,
   keine fremden Quellen, CSP `default-src 'none'` + `'self'` für CSS/JS/Schrift. Das JS ist

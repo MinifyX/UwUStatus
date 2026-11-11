@@ -278,6 +278,11 @@ impl Shared {
 
 async fn accept(shared: Arc<Shared>, endpoint: Endpoint) {
     while let Some(incoming) = endpoint.accept().await {
+        if !incoming.remote_address_validated() {
+            // A stateless retry proves the source address before it can use up or skip any limit.
+            let _ = incoming.retry();
+            continue;
+        }
         let ip = incoming.remote_address().ip().to_canonical();
         let own = shared.state().main_ip == Some(ip);
         let slot = if own {

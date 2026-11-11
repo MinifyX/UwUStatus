@@ -79,7 +79,8 @@ pub struct Login {
 
 pub async fn login(State(state): State<AppState>, Body(login): Body<Login>) -> ApiResult<Response> {
     let admin = state.config.admin.as_ref().ok_or_else(|| ApiError::not_found("Lokale Anmeldung ist aus."))?;
-    if !state.local_failures.has_room() {
+    // Counted before the Argon2 run: parallel guesses cannot slip past the limit or pile up hashes.
+    if !state.local_failures.allow() {
         return Err(ApiError::rate_limited("Zu viele Fehlversuche, bitte eine Minute warten."));
     }
     let hash = admin.password_hash.expose().to_owned();
@@ -109,7 +110,6 @@ pub async fn login(State(state): State<AppState>, Body(login): Body<Login>) -> A
         }
     };
     if !(user_ok && password_ok && totp_ok) {
-        state.local_failures.hit();
         tracing::warn!("local login failed for user {:?}", login.user.chars().take(64).collect::<String>());
         return Err(ApiError::forbidden("Anmeldung fehlgeschlagen."));
     }

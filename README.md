@@ -1,10 +1,21 @@
 # UwUStatus
 
-Self-hosted uptime monitoring and status pages for the UwU suite. One server watches your
-services, alerts you and publishes status pages; probes and a tunnel for checks from outside
-follow in later phases (see [docs/plan.md](docs/plan.md)).
+Self-hosted uptime monitoring and status pages for the UwU suite, a replacement for Uptime Kuma.
+One server watches your services, alerts you and publishes status pages; satellites check from
+outside and raise the alarm themselves when the main instance is gone.
 
-> Early scaffold (0.1.0, unreleased): sign-in, settings and the web app shell. No checks yet.
+- **Checks:** HTTP(S) with keyword, JSON path and certificate expiry, TCP, ping, DNS,
+  SMTP/IMAP with STARTTLS, push/heartbeat, Docker (via socket proxy), UwUSuite `/healthz`
+  ([format](docs/healthz.md)).
+- **Logic:** retries, quorum per monitor (one/majority/all locations), parent monitors,
+  reminders, mute, maintenance windows.
+- **Alerts:** SMTP, webhook, ntfy, Gotify, Pushover, Discord, Telegram.
+- **Status pages:** several, each with its own domains, automatic public incidents,
+  maintenance, 90-day bars, RSS/Atom and Nyu. No cookies, no third-party resources.
+- **Satellites:** `uwustatus-satellite` over a pinned QUIC tunnel, dead-man alert and an
+  emergency status page ([docs/satellite.md](docs/satellite.md)).
+- **Integrations:** read API with tokens, SVG badges, Prometheus `/metrics`.
+- Sign-in with UwUAuth (OIDC) or a local admin, German/English, installable as a PWA.
 
 ## Run
 

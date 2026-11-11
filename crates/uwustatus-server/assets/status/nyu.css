@@ -1,0 +1,370 @@
+/*
+ * Nyu, the UwU cat (docs/nyu.md). The sticker edge, idle motion and scene motion every shell
+ * shares. From UwUMirror (scenes, waves, cable, zzz) and UwUMail (logo hop, the flying Nyu on the
+ * "sent" toast, thinking). Class names are the contract with src/nyu and the apps' scenes.
+ */
+
+.nyu-edge,
+.nyu-edge * {
+  fill: #fff;
+  stroke: #fff;
+}
+
+.nyu-edge * {
+  stroke-width: inherit;
+}
+
+.nyu-edge [fill="none"],
+.nyu-edge [fill="none"] * {
+  fill: none;
+}
+
+.nyu-edge .no-edge {
+  display: none;
+}
+
+.nyu-ear,
+.nyu-eyes,
+.nyu-wave {
+  transform-box: fill-box;
+}
+
+.nyu-ear {
+  transform-origin: 50% 100%;
+}
+
+.nyu-host:hover .nyu-ear-l {
+  animation: nyu-ear-l 480ms ease-in-out;
+}
+
+.nyu-host:hover .nyu-ear-r {
+  animation: nyu-ear-r 480ms ease-in-out;
+}
+
+.nyu-blink .nyu-eyes {
+  transform-origin: center;
+  animation: nyu-blink 5s ease-in-out infinite;
+}
+
+.nyu-wave {
+  transform-origin: 30% 90%;
+  animation: nyu-wave 2.4s ease-in-out infinite;
+}
+
+.nyu-cursor {
+  animation: nyu-cursor 1.06s steps(1) infinite;
+}
+
+/* The waves between a phone and Nyu: each arc lights up in turn. */
+.nyu-waves path {
+  animation: nyu-wave-arc 1.5s ease-in-out infinite;
+}
+
+.nyu-waves path:nth-child(2) {
+  animation-delay: 0.25s;
+}
+
+.nyu-waves path:nth-child(3) {
+  animation-delay: 0.5s;
+}
+
+.nyu-bob,
+.nyu-hop,
+.nyu-walk,
+.nyu-plug,
+.nyu-sparks,
+.nyu-twinkle,
+.nyu-zzz path {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.nyu-bob {
+  animation: nyu-bob 2.2s ease-in-out infinite;
+}
+
+.nyu-hop {
+  animation: nyu-hop 0.9s ease-in-out infinite;
+}
+
+.nyu-walk {
+  animation: nyu-walk 1.4s ease-in-out infinite;
+}
+
+.nyu-plug {
+  animation: nyu-plug 0.9s ease-in-out infinite;
+}
+
+.nyu-sparks {
+  animation: nyu-twinkle 1.2s ease-in-out infinite;
+}
+
+.nyu-twinkle {
+  animation: nyu-twinkle 1.8s ease-in-out infinite;
+}
+
+.nyu-cable {
+  stroke-dasharray: 10 8;
+  animation: nyu-cable 0.8s linear infinite;
+}
+
+.nyu-zzz path {
+  opacity: 0;
+  animation: nyu-zzz 3s ease-in-out infinite;
+}
+
+.nyu-zzz path:nth-child(2) {
+  animation-delay: 1.2s;
+}
+
+@keyframes nyu-bob {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0);
+  }
+  50% {
+    transform: translateY(-6px) rotate(-3deg);
+  }
+}
+
+@keyframes nyu-hop {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(-8px);
+  }
+}
+
+@keyframes nyu-walk {
+  0%,
+  100% {
+    transform: translateX(-6px) rotate(-2deg);
+  }
+  50% {
+    transform: translateX(6px) rotate(2deg);
+  }
+}
+
+@keyframes nyu-plug {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  50% {
+    transform: translateX(6px);
+  }
+}
+
+@keyframes nyu-twinkle {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.55;
+    transform: scale(0.75);
+  }
+}
+
+@keyframes nyu-cable {
+  to {
+    stroke-dashoffset: -18;
+  }
+}
+
+@keyframes nyu-zzz {
+  0% {
+    opacity: 0;
+    transform: translate(0, 8px);
+  }
+  30%,
+  70% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(6px, -14px);
+  }
+}
+
+@keyframes nyu-ear-l {
+  0%,
+  100% {
+    transform: rotate(0);
+  }
+  30% {
+    transform: rotate(-14deg);
+  }
+  65% {
+    transform: rotate(6deg);
+  }
+}
+
+@keyframes nyu-ear-r {
+  0%,
+  100% {
+    transform: rotate(0);
+  }
+  30% {
+    transform: rotate(14deg);
+  }
+  65% {
+    transform: rotate(-6deg);
+  }
+}
+
+@keyframes nyu-blink {
+  0%,
+  90%,
+  100% {
+    transform: scaleY(1);
+  }
+  94% {
+    transform: scaleY(0.1);
+  }
+}
+
+@keyframes nyu-wave {
+  0%,
+  45%,
+  100% {
+    transform: rotate(0);
+  }
+  12%,
+  32% {
+    transform: rotate(-18deg);
+  }
+  22% {
+    transform: rotate(10deg);
+  }
+}
+
+@keyframes nyu-wave-arc {
+  0%,
+  100% {
+    opacity: 0.25;
+  }
+  40% {
+    opacity: 1;
+  }
+}
+
+@keyframes nyu-cursor {
+  0%,
+  50% {
+    opacity: 1;
+  }
+  50.01%,
+  100% {
+    opacity: 0;
+  }
+}
+
+/* ---- One-shot logo hop (new mail, a finished sync worth noting) and the flying Nyu ---- */
+.nyu-logo-hop {
+  transform-origin: 50% 100%;
+  animation: nyu-logo-hop 560ms cubic-bezier(0.3, 0.7, 0.4, 1);
+}
+
+.nyu-flyer {
+  animation: nyu-fly 1100ms cubic-bezier(0.5, 0, 0.8, 0.6) forwards;
+}
+
+@keyframes nyu-logo-hop {
+  0%,
+  100% {
+    transform: translateY(0) scale(1, 1);
+  }
+  18% {
+    transform: translateY(0) scale(1.1, 0.88);
+  }
+  50% {
+    transform: translateY(-38%) scale(0.94, 1.08);
+  }
+  82% {
+    transform: translateY(0) scale(1.06, 0.94);
+  }
+}
+
+@keyframes nyu-fly {
+  0% {
+    opacity: 1;
+    transform: translate(0, 0) rotate(0) scale(1);
+  }
+  25% {
+    transform: translate(18px, -26px) rotate(-10deg) scale(1.15);
+  }
+  70% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(170px, -120px) rotate(24deg) scale(0.7);
+  }
+}
+
+/* ---- Nyu thinking while the AI works (NyuThinking in src/nyu) ---- */
+
+.nyu-think-bob {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+  animation: nyu-think-bob 1.6s ease-in-out infinite;
+}
+
+.nyu-thinking .nyu-eyes {
+  animation: nyu-think-eyes 3.2s ease-in-out infinite;
+}
+
+.nyu-think-dot {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: nyu-think-dot 1.2s ease-in-out infinite both;
+}
+
+@keyframes nyu-think-bob {
+  0%,
+  100% {
+    transform: rotate(-3deg);
+  }
+  50% {
+    transform: rotate(3deg) translateY(-3%);
+  }
+}
+
+@keyframes nyu-think-eyes {
+  0%,
+  30%,
+  100% {
+    transform: translate(10px, -8px);
+  }
+  45%,
+  70% {
+    transform: translate(-6px, -10px);
+  }
+}
+
+@keyframes nyu-think-dot {
+  0%,
+  60%,
+  100% {
+    opacity: 0.35;
+    transform: scale(0.8);
+  }
+  30% {
+    opacity: 1;
+    transform: scale(1.15) translateY(-2px);
+  }
+}
+
+/* ---- Small idle movements in the empty-state scenes (scenes.tsx) ---- */
+/* Motion off: Nyu holds still (1 ms loops would flicker) and the flying Nyu stays away. */
+:root[data-motion="reduced"] :is(.nyu-host, .nyu-host *, .nyu-scene, .nyu-scene *) {
+  animation: none !important;
+}
+
+:root[data-motion="reduced"] .nyu-flyer {
+  display: none;
+}

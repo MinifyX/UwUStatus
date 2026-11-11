@@ -109,6 +109,56 @@ CREATE TABLE maintenance (
     config TEXT NOT NULL
 );
 ",
+    // Migration 4: status pages
+    "
+CREATE TABLE status_pages (
+    id INTEGER PRIMARY KEY,
+    slug TEXT NOT NULL UNIQUE,
+    config TEXT NOT NULL,
+    logo BLOB,
+    logo_type TEXT,
+    created INTEGER NOT NULL,
+    updated INTEGER NOT NULL
+);
+CREATE TABLE monitor_public (
+    monitor_id INTEGER PRIMARY KEY REFERENCES monitors (id) ON DELETE CASCADE,
+    public_id TEXT NOT NULL UNIQUE,
+    badge_public INTEGER NOT NULL DEFAULT 0
+);
+CREATE TABLE incidents (
+    id INTEGER PRIMARY KEY,
+    title TEXT NOT NULL,
+    auto INTEGER NOT NULL,
+    monitor_id INTEGER REFERENCES monitors (id) ON DELETE SET NULL,
+    impact TEXT NOT NULL,
+    status TEXT NOT NULL,
+    started INTEGER NOT NULL,
+    resolved INTEGER
+);
+CREATE INDEX incidents_open ON incidents (monitor_id, resolved);
+CREATE TABLE incident_monitors (
+    incident_id INTEGER NOT NULL REFERENCES incidents (id) ON DELETE CASCADE,
+    monitor_id INTEGER NOT NULL REFERENCES monitors (id) ON DELETE CASCADE,
+    PRIMARY KEY (incident_id, monitor_id)
+);
+CREATE INDEX incident_monitors_monitor ON incident_monitors (monitor_id);
+CREATE TABLE incident_updates (
+    id INTEGER PRIMARY KEY,
+    incident_id INTEGER NOT NULL REFERENCES incidents (id) ON DELETE CASCADE,
+    at INTEGER NOT NULL,
+    status TEXT NOT NULL,
+    body TEXT NOT NULL
+);
+CREATE INDEX incident_updates_incident ON incident_updates (incident_id, at);
+CREATE TABLE api_tokens (
+    id INTEGER PRIMARY KEY,
+    name TEXT NOT NULL,
+    token_hash TEXT NOT NULL UNIQUE,
+    scopes TEXT NOT NULL,
+    created INTEGER NOT NULL,
+    last_used INTEGER
+);
+",
 ];
 
 pub struct Db(Mutex<Connection>);

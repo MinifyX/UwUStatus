@@ -44,7 +44,7 @@ export function errorFrom(status: number, body: unknown): ApiError {
 
 type Method = 'GET' | 'POST' | 'PUT' | 'DELETE';
 
-async function request<T>(method: Method, path: string, body?: unknown): Promise<T> {
+export async function request<T>(method: Method, path: string, body?: unknown): Promise<T> {
   let response: Response;
   try {
     response = await fetch(path, {

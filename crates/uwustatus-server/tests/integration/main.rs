@@ -7,4 +7,5 @@ mod history;
 mod ingest;
 mod monitors;
 mod planner;
+mod status_pages;
 mod support;

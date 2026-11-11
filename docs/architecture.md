@@ -29,6 +29,11 @@ Alle Zeiten sind Unix-Sekunden aus `AppState.clock` (`Clock::System` oder für T
 | `events` | `kind` `state`/`version`/`cert`, `from_value`, `to_value`, `reason` |
 | `maintenance` | `config` (JSON: Zeitplan `once`/`weekly` + Monitore/Gruppen) |
 | `settings` | `settings` (Aufbewahrung, Standardintervall), `rollup_next` (Fortschritt der Verdichtung) |
+| `status_pages` | `slug` (unique), `config` (JSON `PageConfig`: Titel, Domains, Sprache, Akzent, Nyu, Zeitzone, Gruppen), `logo` + `logo_type` |
+| `monitor_public` | `public_id` (zufällig, 16 Zeichen) für Badges/öffentliche JSON, `badge_public` |
+| `incidents` | `title` (leer = automatischer Titel), `auto`, `monitor_id` (Auslöser), `impact`, `status`, `started`, `resolved` |
+| `incident_monitors`, `incident_updates` | betroffene Monitore; Verlauf (`at`, `status`, `body`) |
+| `api_tokens` | `name`, `token_hash` (SHA-256), `scopes` (JSON `read`/`metrics`), `last_used` |
 
 ## Monitor-Konfiguration
 
@@ -77,6 +82,40 @@ VersionChanged { monitor_id, at, from, to }
 | GET, POST | `/api/maintenance` | |
 | GET, PUT, DELETE | `/api/maintenance/{id}` | |
 | GET, POST | `/api/push/{token}?status=up\|down&msg=&ping=` | ohne Login, rate-limitiert |
+| GET, POST | `/api/pages` · GET, PUT, DELETE `/api/pages/{id}` | Statusseiten |
+| PUT, DELETE | `/api/pages/{id}/logo` | Rohdatei, ≤ 60 KB, PNG/JPEG/WebP/SVG |
+| GET, PUT | `/api/monitors/{id}/badge` | `public_id`, `badge_public`, Badge-URLs |
+| GET, POST | `/api/incidents?status=open&lang=` · GET, PUT, DELETE `/api/incidents/{id}` | Vorfälle |
+| POST · PUT | `/api/incidents/{id}/updates` · `/api/incidents/{id}/updates/{uid}` | Meldungen |
+| GET, POST · DELETE | `/api/tokens` · `/api/tokens/{id}` | Token nur in der Anlege-Antwort |
+| GET | `/s/{slug}/…` | Vorschau einer Seite auf dem Admin-Host (Login) |
+
+Auf jedem Host, ohne Session:
+
+| Methode | Pfad | |
+|---|---|---|
+| GET | `/api/v1/monitors`, `/api/v1/monitors/{id}` | Bearer-Token mit `read` |
+| GET | `/api/v1/pages/{slug}/summary` | öffentlich, `Access-Control-Allow-Origin: *` |
+| GET | `/metrics` | Bearer-Token mit `metrics`, Prometheus-Textformat |
+| GET | `/badge/{public_id}/status.svg\|uptime.svg?days=30\|latency.svg` | nur Monitore auf einer Seite oder mit `badge_public` |
+
+## Statusseiten (Phase 5)
+
+- Host-Weiche: der Admin-Host (`public_url`) bekommt die App, jeder andere Host die Seite, deren
+  `domains` ihn enthalten (`pages::by_host`), sonst 404. Unter der Seite: `/`, `/history`,
+  `/feed.atom`, `/feed.rss`, `/logo`, `/_status/*` (CSS, JS, Schrift aus `assets/status/`).
+- `render.rs` baut HTML ohne Templates; jeder Text aus der DB läuft durch `esc`. Keine Cookies,
+  keine fremden Quellen, CSP `default-src 'none'` + `'self'` für CSS/JS/Schrift. Das JS ist
+  optional (Pfeiltasten über die Tagesbalken, Escape schließt Tooltips).
+- Gesamtzustand → Nyu: alle down → `outage`/sad, irgendwas down/degraded → `partial`/puzzled
+  (es gibt kein „worried“), Wartung → sleepy, sonst happy. `pending`/`paused` zählen nicht.
+- 90 Tagesbalken in der Seiten-Zeitzone aus den Zustands-Events (`status::days`).
+- Vorfälle: `incidents::spawn` hört auf den Bus. down/degraded öffnet (oder ändert die
+  Auswirkung des offenen), down mit `unreachable_via_parent` hängt den Monitor an den offenen
+  Vorfall eines Vorfahren, up/paused schließt mit „behoben“. Wartung/pending ändern nichts.
+  Wartungsfenster der nächsten 14 Tage erscheinen als geplante Wartung.
+- Assets: `web/scripts/status-assets.mjs` erzeugt die Nyu-SVGs und kopiert Schrift + `nyu.css`
+  aus `@uwusuite/design`; nach einem Design-Update neu ausführen.
 
 ## Verdichtung und Aufbewahrung
 

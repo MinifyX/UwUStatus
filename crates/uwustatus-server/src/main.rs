@@ -41,6 +41,7 @@ fn serve() -> Result<(), String> {
     runtime()?.block_on(async move {
         let bind = config.bind;
         let state = uwustatus_server::app::build(config, db)?;
+        uwustatus_server::incidents::spawn(&state);
         uwustatus_server::planner::spawn(&state)?;
         let listener = tokio::net::TcpListener::bind(bind).await.map_err(|e| format!("{bind}: {e}"))?;
         tracing::info!("listening on {bind}");

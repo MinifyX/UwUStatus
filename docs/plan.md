@@ -54,7 +54,7 @@ der Totmann.
 3. [x] Planer, Zustandsmaschine (Wiederholungen, Quorum, Eltern, Wartung),
        Speicherung + Verdichtung.
 4. [ ] Alarm-Kanäle.
-5. [ ] Statusseiten, Vorfälle, RSS, Badges, API, `/metrics`.
+5. [x] Statusseiten, Vorfälle, RSS, Badges, API, `/metrics`.
 6. [ ] Tunnel + Satellit + Totmann + Notfall-Statusseite, Packaging wie Gateway.
 7. [ ] Web-UI komplett (Dashboard, Monitore, Kanäle, Seiten, Wartung,
        Satelliten, Einstellungen).

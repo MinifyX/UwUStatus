@@ -1,5 +1,6 @@
 //! UwUStatus server: admin app, status pages, (later) scheduler and alerts.
 
+pub mod api;
 pub mod app;
 pub mod auth;
 pub mod config;
@@ -8,12 +9,15 @@ pub mod engine;
 pub mod error;
 pub mod events;
 pub mod history;
+pub mod incidents;
 pub mod ingest;
 pub mod local;
 pub mod maintenance;
 pub mod monitors;
 pub mod oidc;
+pub mod pages;
 pub mod planner;
+pub mod render;
 pub mod settings;
 pub mod status;
 pub mod web;

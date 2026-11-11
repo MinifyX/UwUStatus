@@ -109,6 +109,34 @@ CREATE TABLE maintenance (
     config TEXT NOT NULL
 );
 ",
+    // Migration 3: alerts
+    "
+CREATE TABLE notification_channels (
+    id INTEGER PRIMARY KEY,
+    config TEXT NOT NULL,
+    secrets TEXT NOT NULL DEFAULT '{}',
+    created INTEGER NOT NULL,
+    updated INTEGER NOT NULL
+);
+CREATE TABLE monitor_channels (
+    monitor_id INTEGER NOT NULL REFERENCES monitors (id) ON DELETE CASCADE,
+    channel_id INTEGER NOT NULL REFERENCES notification_channels (id) ON DELETE CASCADE,
+    PRIMARY KEY (monitor_id, channel_id)
+);
+CREATE INDEX monitor_channels_channel ON monitor_channels (channel_id);
+CREATE TABLE notification_log (
+    id INTEGER PRIMARY KEY,
+    channel_id INTEGER NOT NULL REFERENCES notification_channels (id) ON DELETE CASCADE,
+    at INTEGER NOT NULL,
+    monitor_id INTEGER,
+    event TEXT NOT NULL,
+    title TEXT NOT NULL,
+    ok INTEGER NOT NULL,
+    attempts INTEGER NOT NULL,
+    error TEXT NOT NULL
+);
+CREATE INDEX notification_log_channel ON notification_log (channel_id, id);
+",
 ];
 
 pub struct Db(Mutex<Connection>);

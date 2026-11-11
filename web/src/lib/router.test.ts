@@ -6,4 +6,5 @@ it('parses and builds routes', () => {
   expect(parseRoute('/settings')).toEqual({ name: 'settings' });
   expect(parseRoute('/settings/x')).toEqual({ name: 'notFound' });
   expect(hrefOf({ name: 'settings' })).toBe('/settings');
+  expect(parseRoute(hrefOf({ name: 'notifications' }))).toEqual({ name: 'notifications' });
 });

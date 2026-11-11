@@ -85,3 +85,49 @@ Fertige Stunden (und um Mitternacht UTC der Tag) werden zu `rollups` verdichtet,
 `retention_hourly_days`, Tage und Events nach `retention_daily_days` gelöscht. Die Uptime ist
 zeitgewichtet aus den Zustands-Events; `pending`/`paused`/`maintenance` zählen nicht,
 `degraded` zählt als erreichbar.
+
+## Alarme (Phase 4)
+
+```
+Event-Bus ─> alerts::spawn (ein Task) ─> Monitor stumm/pausiert/Wartung? ─> Kanäle des Monitors
+          ─> je Kanal: Text DE/EN ─> uwustatus_notify::Sender::send, Wiederholung nach 10 s/60 s/5 min
+          ─> notification_log (letzte 100 je Kanal)
+```
+
+- Gesendet wird `StateChanged` mit `alert = true` (`down`, `degraded`, `up`), `Reminder`
+  (`reminder`), `CertExpiring` (`cert`) und `VersionChanged` (`version`, standardmäßig aus).
+  Welche davon ein Kanal bekommt, steht in seinen `events`.
+- Zertifikats- und Versions-Events prüft der Dispatcher selbst gegen `muted`, `paused`,
+  `maintenance` und aktive Wartungsfenster (der Kern filtert nur Zustandswechsel).
+- Text: `{Monitor}: ausgefallen | eingeschränkt | wieder erreichbar | weiterhin ausgefallen |
+  Zertifikat läuft in n Tagen ab | neue Version x`, dazu Grund, Zeit (UTC), Ausfalldauer und
+  Link `{public_url}/monitors/{id}`.
+- Neue Monitore bekommen alle Kanäle mit `is_default` (`channels::assign_defaults`).
+
+**Crate `uwustatus-notify`** (ohne Server-Zustand, auch für den Satelliten): `Target { channel,
+secrets, lang, smtp }` ist serialisierbar und vollständig; `Sender::send(&Target, &Message)`.
+`Channel` = `email { to }` | `webhook { url }` | `ntfy { server, topic, priority }` |
+`gotify { url, priority }` | `pushover { priority }` | `discord {}` | `telegram { chat_id }`.
+Geheimnisse (`Channel::secret_names`): Webhook `hmac_secret`, ntfy/Gotify `token`, Pushover
+`user_key` + `token`, Discord `webhook_url`, Telegram `bot_token`. Nur http/https, 15 s
+Timeout, keine Redirects, Antworten höchstens 64 KiB gelesen, URLs nie in Fehlertexten.
+
+**Webhook-Body:** `{ "title", "body", "severity": "down|degraded|up|info", "link", "event" }`
+(`event` = das Bus-Event als JSON, beim Test `{ "type": "test" }`). Mit `hmac_secret` trägt
+`X-UwUStatus-Signature` den Wert `sha256=<hex HMAC-SHA256 über den Body>`.
+
+| Tabelle | Inhalt |
+|---|---|
+| `notification_channels` | `config` (JSON: `name`, `enabled`, `lang`, `events`, `is_default`, `channel`), `secrets` (JSON, nie in Antworten) |
+| `monitor_channels` | `(monitor_id, channel_id)`, beide `ON DELETE CASCADE` |
+| `notification_log` | `channel_id`, `at`, `monitor_id`, `event`, `title`, `ok`, `attempts`, `error` |
+| `settings` | `smtp` (globale SMTP-Einstellungen) |
+
+| Methode | Pfad | |
+|---|---|---|
+| GET, POST | `/api/channels` | Antworten zeigen nur `secrets: ["name", …]` (gesetzte Namen) |
+| GET, PUT, DELETE | `/api/channels/{id}` | PUT: fehlendes Geheimnis bleibt, `""` löscht |
+| POST | `/api/channels/{id}/test` | ein Versuch, protokolliert; Fehler ⇒ 502 mit Grund |
+| GET | `/api/channels/{id}/log` | neueste zuerst |
+| GET, PUT | `/api/monitors/{id}/channels` | Liste von Kanal-IDs |
+| GET, PUT | `/api/smtp` | Passwort nur schreibbar (`password_set`); leerer `host` entfernt |

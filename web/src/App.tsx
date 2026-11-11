@@ -1,26 +1,30 @@
-// The frame: sign-in gate (UwUAuth and/or local admin), header with navigation, language and user.
+// The app: sign-in gate (UwUAuth and/or local admin), then the shell with one page per route.
 
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import {
   Button,
-  Card,
   Field,
   ICONS,
   Nyu,
-  Segmented,
   TextInput,
   Toaster,
   Wordmark,
   useAppearance,
 } from '@uwusuite/design';
 import { api, loginUrl, UNAUTHENTICATED_EVENT } from './api/client';
-import type { Me, Methods, Settings } from './api/types';
-import { ButtonLink, Empty, ErrorBox, Link, Loading, PageHeader } from './components/ui';
+import type { Me, Methods } from './api/types';
+import { LanguageSwitch, navFor, Shell } from './components/Shell';
+import { ButtonLink, Empty, ErrorBox, Link, Loading } from './components/ui';
+import { Dashboard } from './pages/Dashboard';
+import { MaintenanceForm, MaintenanceList } from './pages/Maintenance';
+import { MonitorDetail } from './pages/MonitorDetail';
+import { MonitorForm } from './pages/MonitorForm';
+import { SettingsPage } from './pages/Settings';
 import { useStoredAppearance } from './lib/appearance';
 import { NotificationsPage } from './pages/Notifications';
 import { toasts, useAction, useResource } from './lib/hooks';
-import { useT, type Key, type Lang } from './lib/i18n';
-import { currentPath, hrefOf, navigate, useRoute, type Route } from './lib/router';
+import { useT } from './lib/i18n';
+import { currentPath, useRoute, type Route } from './lib/router';
 import { ApiTokens } from './pages/ApiTokens';
 import { Incidents } from './pages/Incidents';
 import { StatusPages } from './pages/StatusPages';
@@ -30,15 +34,6 @@ type Auth =
   | { state: 'signedOut' }
   | { state: 'error'; error: Error }
   | { state: 'in'; me: Me };
-
-const NAV: { route: Route; label: Key }[] = [
-  { route: { name: 'overview' }, label: 'nav.overview' },
-  { route: { name: 'notifications' }, label: 'nav.notifications' },
-  { route: { name: 'pages' }, label: 'nav.pages' },
-  { route: { name: 'incidents' }, label: 'nav.incidents' },
-  { route: { name: 'apiTokens' }, label: 'nav.apiTokens' },
-  { route: { name: 'settings' }, label: 'nav.settings' },
-];
 
 export function App() {
   useAppearance(useStoredAppearance());
@@ -67,7 +62,7 @@ export function App() {
 
   useEffect(() => {
     window.scrollTo({ top: 0 });
-    const page = NAV.find((n) => n.route.name === route.name)?.label;
+    const page = navFor(route)?.label;
     document.title = page ? `${t(page)} – UwUStatus` : 'UwUStatus';
   }, [route, t]);
 
@@ -86,74 +81,9 @@ export function App() {
   };
 
   return (
-    <>
-      <a
-        href="#main"
-        className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:rounded-full focus:bg-surface focus:px-4 focus:py-2"
-      >
-        {t('app.skip')}
-      </a>
-      <header className="sticky top-0 z-30 border-b border-hairline bg-surface">
-        <div className="mx-auto flex max-w-[1280px] flex-wrap items-center gap-x-6 gap-y-2 px-4 py-2 lg:px-8">
-          <Link href="/" className="no-underline" aria-label={t('nav.home')}>
-            <Wordmark product="Status" shell="box" />
-          </Link>
-          <nav
-            aria-label={t('nav.main')}
-            className="order-3 -mx-1 flex w-full gap-1 overflow-x-auto px-1 md:order-none md:w-auto"
-          >
-            {NAV.map((item) => {
-              const active = item.route.name === route.name;
-              return (
-                <Link
-                  key={item.label}
-                  href={hrefOf(item.route)}
-                  aria-current={active ? 'page' : undefined}
-                  className={`flex h-9 shrink-0 items-center rounded-xl px-3 text-[13.5px] no-underline ${
-                    active
-                      ? 'bg-pink-tint font-semibold text-pink-ink'
-                      : 'text-ink hover:bg-pink-tint/45'
-                  }`}
-                >
-                  {t(item.label)}
-                </Link>
-              );
-            })}
-          </nav>
-          <div className="ml-auto flex items-center gap-2">
-            <LanguageSwitch />
-            <span
-              className="hidden text-meta text-muted sm:inline"
-              title={auth.me.email ?? undefined}
-            >
-              {auth.me.name}
-            </span>
-            <Button size="sm" variant="ghost" icon={ICONS.signOut} onClick={() => void logout()}>
-              {t('auth.logout')}
-            </Button>
-          </div>
-        </div>
-      </header>
-      <main id="main" className="mx-auto w-full max-w-[1280px] min-w-0 px-4 py-6 lg:px-8">
-        <Page route={route} />
-      </main>
-      <Toaster store={toasts} />
-    </>
-  );
-}
-
-function LanguageSwitch() {
-  const { t, lang, setLang } = useT();
-  return (
-    <Segmented<Lang>
-      label={t('language.label')}
-      value={lang}
-      onChange={setLang}
-      options={[
-        { value: 'de', label: 'DE' },
-        { value: 'en', label: 'EN' },
-      ]}
-    />
+    <Shell me={auth.me} route={route} onLogout={() => void logout()}>
+      <Page route={route} me={auth.me} />
+    </Shell>
   );
 }
 
@@ -252,69 +182,29 @@ function SignIn({ onLocal }: { onLocal: () => void }) {
   );
 }
 
-function SettingsPage() {
-  const { t } = useT();
-  const settings = useResource(api.settings, []);
-  const { busy, run } = useAction();
-  const [draft, setDraft] = useState<Settings>();
-  useEffect(() => setDraft(settings.data), [settings.data]);
-
-  if (settings.error) return <ErrorBox error={settings.error} retry={settings.reload} />;
-  if (!draft) return <Loading />;
-
-  const fields: { key: keyof Settings; label: Key }[] = [
-    { key: 'retention_raw_days', label: 'settings.raw' },
-    { key: 'retention_hourly_days', label: 'settings.hourly' },
-    { key: 'retention_daily_days', label: 'settings.daily' },
-  ];
-  const submit = async (event: FormEvent) => {
-    event.preventDefault();
-    const saved = await run('save', () => api.saveSettings(draft), t('settings.saved'));
-    if (saved) settings.set(saved);
-  };
-  return (
-    <>
-      <PageHeader title={t('nav.settings')} />
-      <Card title={t('settings.retention')} icon={ICONS.settings}>
-        <form className="flex flex-col gap-4" onSubmit={(e) => void submit(e)}>
-          {fields.map(({ key, label }) => (
-            <Field key={key} label={t(label)}>
-              {(id) => (
-                <TextInput
-                  id={id}
-                  inputMode="numeric"
-                  className="w-32"
-                  value={String(draft[key])}
-                  onChange={(e) =>
-                    setDraft({ ...draft, [key]: Number(e.target.value.replace(/\D/g, '')) })
-                  }
-                />
-              )}
-            </Field>
-          ))}
-          <div>
-            <Button type="submit" variant="primary" disabled={busy !== null}>
-              {t('settings.save')}
-            </Button>
-          </div>
-        </form>
-      </Card>
-    </>
-  );
-}
-
-function Page({ route }: { route: Route }) {
+/**
+ * One case per page. Other phases add theirs here (plus a route in lib/router.ts and a NAV
+ * line in components/Shell.tsx).
+ */
+function Page({ route, me }: { route: Route; me: Me }) {
   const { t } = useT();
   switch (route.name) {
     case 'overview':
-      return (
-        <>
-          <PageHeader title={t('nav.overview')} />
-          <Empty title={t('overview.empty')} body={t('overview.emptyBody')} />
-        </>
-      );
+      return <Dashboard />;
+    case 'monitor':
+      return <MonitorDetail key={route.id} id={route.id} />;
+    case 'monitorNew':
+      return <MonitorForm />;
+    case 'monitorEdit':
+      return <MonitorForm key={route.id} id={route.id} />;
+    case 'maintenance':
+      return <MaintenanceList />;
+    case 'maintenanceNew':
+      return <MaintenanceForm />;
+    case 'maintenanceEdit':
+      return <MaintenanceForm key={route.id} id={route.id} />;
     case 'settings':
-      return <SettingsPage />;
+      return <SettingsPage me={me} />;
     case 'notifications':
       return <NotificationsPage />;
     case 'pages':
@@ -328,11 +218,7 @@ function Page({ route }: { route: Route }) {
         <Empty
           title={t('common.notFound')}
           mood="puzzled"
-          body={
-            <Link href="/" onClick={() => navigate('/')}>
-              {t('common.toOverview')}
-            </Link>
-          }
+          body={<Link href="/">{t('common.toOverview')}</Link>}
         />
       );
   }

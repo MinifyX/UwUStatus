@@ -57,7 +57,9 @@ der Totmann.
 5. [x] Statusseiten, Vorfälle, RSS, Badges, API, `/metrics`.
 6. [ ] Tunnel + Satellit + Totmann + Notfall-Statusseite, Packaging wie Gateway.
 7. [ ] Web-UI komplett (Dashboard, Monitore, Kanäle, Seiten, Wartung,
-       Satelliten, Einstellungen).
+       Satelliten, Einstellungen). **Kern fertig** (Shell, Übersicht, Monitor-Detail +
+       -Formular, Wartung, Einstellungen, PWA, `pnpm dev:mock`); Kanäle, Seiten,
+       Vorfälle, API-Tokens und Satelliten hängen ihre Seiten per NAV-Zeile ein.
 8. [ ] `docs/healthz.md` + Einbau in Mail, Auth, Lock, Sync, DNS, Clip,
        je Patch-Release.
 9. [ ] Security-Review, Release 0.1.0, Deploy mfxdocker2 (Admin intern über

@@ -3,31 +3,44 @@
 
 import { useEffect, useState, type MouseEvent } from 'react';
 
+// Other phases add their pages here: one Route variant, one parse line, one href case.
 export type Route =
-  | { name: 'notifications' }
   | { name: 'overview' }
+  | { name: 'monitor'; id: number }
+  | { name: 'monitorNew' }
+  | { name: 'monitorEdit'; id: number }
+  | { name: 'maintenance' }
+  | { name: 'maintenanceNew' }
+  | { name: 'maintenanceEdit'; id: number }
   | { name: 'settings' }
-  | { name: 'notFound' }
+  | { name: 'notifications' }
   | { name: 'pages'; id?: number | 'new' }
   | { name: 'incidents'; id?: number }
-  | { name: 'apiTokens' };
+  | { name: 'apiTokens' }
+  | { name: 'notFound' };
 
-const id = (part: string | undefined) => (part && /^[1-9]\d{0,15}$/.test(part) ? Number(part) : 0);
+const ID = /^[1-9]\d{0,15}$/;
 
 export function parseRoute(pathname: string): Route {
-  const parts = pathname.split('/').filter(Boolean);
-  if (parts.length === 0) return { name: 'overview' };
-  if (parts.length === 1 && parts[0] === 'settings') return { name: 'settings' };
-  if (parts.length === 1 && parts[0] === 'notifications') return { name: 'notifications' };
-  if (parts.length === 1 && parts[0] === 'api-tokens') return { name: 'apiTokens' };
-  if (parts[0] === 'pages' && parts.length === 1) return { name: 'pages' };
-  if (parts[0] === 'pages' && parts.length === 2 && parts[1] === 'new')
-    return { name: 'pages', id: 'new' };
-  if (parts[0] === 'pages' && parts.length === 2 && id(parts[1]))
-    return { name: 'pages', id: id(parts[1]) };
-  if (parts[0] === 'incidents' && parts.length === 1) return { name: 'incidents' };
-  if (parts[0] === 'incidents' && parts.length === 2 && id(parts[1]))
-    return { name: 'incidents', id: id(parts[1]) };
+  const [a, b, c, ...rest] = pathname.split('/').filter(Boolean);
+  if (rest.length) return { name: 'notFound' };
+  const id = b && ID.test(b) ? Number(b) : null;
+  if (!a) return { name: 'overview' };
+  if (a === 'settings' && !b) return { name: 'settings' };
+  // Alert links point at {public_url}/monitors/{id}.
+  if (a === 'monitors' && b === 'new' && !c) return { name: 'monitorNew' };
+  if (a === 'monitors' && id && !c) return { name: 'monitor', id };
+  if (a === 'monitors' && id && c === 'edit') return { name: 'monitorEdit', id };
+  if (a === 'maintenance' && !b) return { name: 'maintenance' };
+  if (a === 'maintenance' && b === 'new' && !c) return { name: 'maintenanceNew' };
+  if (a === 'maintenance' && id && !c) return { name: 'maintenanceEdit', id };
+  if (a === 'notifications' && !b) return { name: 'notifications' };
+  if (a === 'api-tokens' && !b) return { name: 'apiTokens' };
+  if (a === 'pages' && !b) return { name: 'pages' };
+  if (a === 'pages' && b === 'new' && !c) return { name: 'pages', id: 'new' };
+  if (a === 'pages' && id && !c) return { name: 'pages', id };
+  if (a === 'incidents' && !b) return { name: 'incidents' };
+  if (a === 'incidents' && id && !c) return { name: 'incidents', id };
   return { name: 'notFound' };
 }
 
@@ -36,6 +49,18 @@ export function hrefOf(route: Route): string {
     case 'overview':
     case 'notFound':
       return '/';
+    case 'monitor':
+      return `/monitors/${route.id}`;
+    case 'monitorNew':
+      return '/monitors/new';
+    case 'monitorEdit':
+      return `/monitors/${route.id}/edit`;
+    case 'maintenance':
+      return '/maintenance';
+    case 'maintenanceNew':
+      return '/maintenance/new';
+    case 'maintenanceEdit':
+      return `/maintenance/${route.id}`;
     case 'settings':
       return '/settings';
     case 'notifications':

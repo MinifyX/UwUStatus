@@ -181,5 +181,11 @@ async fn history_and_events_api() {
         (overview.body[0]["state"].as_str(), overview.body[0]["message"].as_str()),
         (Some("down"), Some("Down"))
     );
+    let recent: Vec<&str> =
+        overview.body[0]["recent"].as_array().unwrap().iter().map(|b| b["status"].as_str().unwrap()).collect();
+    assert_eq!(recent, ["up", "down"], "heartbeat oldest first");
+    let loc = &overview.body[0]["locations"][0];
+    assert_eq!((loc["location"].as_str(), loc["state"].as_str()), (Some("local"), Some("down")), "{loc:?}");
+    assert!(overview.body[0].get("cert_days_left").is_some());
     assert_eq!(env.send("GET", "/api/monitors/999/events", Some(&cookie), None).await.status, StatusCode::NOT_FOUND);
 }

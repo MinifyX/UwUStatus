@@ -246,7 +246,30 @@ pub struct OverviewItem {
     message: Option<String>,
     uptime_24h: Option<f64>,
     uptime_30d: Option<f64>,
+    version: Option<String>,
+    cert_days_left: Option<i64>,
+    /// Last results, oldest first, for the heartbeat bar.
+    /// shortcut: mixes all locations, split per location if the bar gets confusing.
+    recent: Vec<Beat>,
+    locations: Vec<LocationItem>,
 }
+
+#[derive(Serialize)]
+pub struct Beat {
+    at: i64,
+    status: String,
+}
+
+#[derive(Serialize)]
+pub struct LocationItem {
+    location: String,
+    state: String,
+    failures: i64,
+    at: i64,
+    message: String,
+}
+
+const RECENT: i64 = 30;
 
 /// `GET /api/overview`: every monitor with its current state and uptime.
 pub async fn overview(State(state): State<AppState>, _: Authed) -> ApiResult<Json<Vec<OverviewItem>>> {
@@ -254,20 +277,52 @@ pub async fn overview(State(state): State<AppState>, _: Authed) -> ApiResult<Jso
     let items = state.db.with(|c| {
         let mut out = Vec::new();
         for m in crate::monitors::all(c)? {
-            type Row = (String, String, i64, bool, Option<i64>, Option<i64>, Option<String>);
+            type Row = (String, String, i64, bool, Option<i64>, Option<i64>, Option<String>, Option<String>, Option<i64>);
             let row: Option<Row> = c
                 .query_row(
-                    "SELECT state, reason, since, via_parent, last_at, latency_ms, message FROM monitor_state WHERE monitor_id = ?1",
+                    "SELECT state, reason, since, via_parent, last_at, latency_ms, message, version, cert_days_left
+                     FROM monitor_state WHERE monitor_id = ?1",
                     [m.id],
-                    |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?, r.get(3)?, r.get(4)?, r.get(5)?, r.get(6)?)),
+                    |r| {
+                        Ok((
+                            r.get(0)?,
+                            r.get(1)?,
+                            r.get(2)?,
+                            r.get(3)?,
+                            r.get(4)?,
+                            r.get(5)?,
+                            r.get(6)?,
+                            r.get(7)?,
+                            r.get(8)?,
+                        ))
+                    },
                 )
                 .optional()?;
-            let (s, reason, since, via, last_check, latency_ms, message) = match row {
-                Some((s, reason, since, via, last, latency, message)) => {
-                    (MonState::parse(&s), reason, Some(since), via, last, latency, message)
+            let (s, reason, since, via, last_check, latency_ms, message, version, cert_days_left) = match row {
+                Some((s, reason, since, via, last, latency, message, version, cert)) => {
+                    (MonState::parse(&s), reason, Some(since), via, last, latency, message, version, cert)
                 }
-                None => (MonState::Pending, String::new(), None, false, None, None, None),
+                None => (MonState::Pending, String::new(), None, false, None, None, None, None, None),
             };
+            let mut recent = c
+                .prepare_cached("SELECT at, status FROM results WHERE monitor_id = ?1 ORDER BY at DESC, id DESC LIMIT ?2")?
+                .query_map([m.id, RECENT], |r| Ok(Beat { at: r.get(0)?, status: r.get(1)? }))?
+                .collect::<rusqlite::Result<Vec<_>>>()?;
+            recent.reverse();
+            let locations = c
+                .prepare_cached(
+                    "SELECT location, state, failures, at, message FROM location_state WHERE monitor_id = ?1 ORDER BY location",
+                )?
+                .query_map([m.id], |r| {
+                    Ok(LocationItem {
+                        location: r.get(0)?,
+                        state: r.get(1)?,
+                        failures: r.get(2)?,
+                        at: r.get(3)?,
+                        message: r.get(4)?,
+                    })
+                })?
+                .collect::<rusqlite::Result<Vec<_>>>()?;
             out.push(OverviewItem {
                 id: m.id,
                 uptime_24h: uptime_in(c, m.id, now - DAY, now)?,
@@ -286,6 +341,10 @@ pub async fn overview(State(state): State<AppState>, _: Authed) -> ApiResult<Jso
                 last_check,
                 latency_ms,
                 message,
+                version,
+                cert_days_left,
+                recent,
+                locations,
             });
         }
         Ok(out)

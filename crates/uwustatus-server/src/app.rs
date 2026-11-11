@@ -73,6 +73,7 @@ pub struct Inner {
     /// Push calls, global.
     // shortcut: one global window (20/s on average); per token when someone pushes that often.
     pub pushes: Limiter,
+    pub alerts: crate::alerts::Alerts,
 }
 
 impl Inner {
@@ -104,6 +105,7 @@ pub fn build_with_clock(config: Config, db: Db, clock: Clock) -> Result<AppState
     let (planner, planner_rx) = mpsc::unbounded_channel();
     Ok(Arc::new(Inner {
         oidc: config.oidc.clone().map(|c| Oidc::new(http.clone(), c)),
+        alerts: crate::alerts::Alerts::new(http.clone()),
         http,
         config,
         db,
@@ -136,6 +138,12 @@ fn admin_router(state: &AppState) -> Router<AppState> {
         .route("/overview", get(history::overview))
         .route("/maintenance", get(maintenance::list).post(maintenance::create))
         .route("/maintenance/{id}", get(maintenance::get).put(maintenance::update).delete(maintenance::delete))
+        .route("/channels", get(crate::channels::list).post(crate::channels::create))
+        .route("/channels/{id}", get(crate::channels::get).put(crate::channels::update).delete(crate::channels::delete))
+        .route("/channels/{id}/test", post(crate::channels::test))
+        .route("/channels/{id}/log", get(crate::channels::log))
+        .route("/monitors/{id}/channels", get(crate::channels::of_monitor_get).put(crate::channels::of_monitor_put))
+        .route("/smtp", get(crate::channels::smtp_get).put(crate::channels::smtp_put))
         .fallback(web::api_not_found);
     Router::new()
         .nest("/api", api)

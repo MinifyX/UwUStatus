@@ -1,0 +1,27 @@
+[package]
+name = "uwustatus-notify"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+description = "Alarm-Versand für UwUStatus (SMTP, Webhook, ntfy, Gotify, Pushover, Discord, Telegram)"
+
+[dependencies]
+hmac = "0.12"
+lettre = { version = "0.11", default-features = false, features = ["builder", "hostname", "smtp-transport", "tokio1-rustls", "aws-lc-rs", "rustls-platform-verifier"] }
+reqwest = { version = "0.13", default-features = false, features = ["rustls", "json", "form"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+sha2 = "0.10"
+
+[dev-dependencies]
+axum = { version = "0.8", default-features = false, features = ["http1", "json", "tokio"] }
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "net", "io-util", "sync"] }
+
+[[test]]
+name = "integration"
+path = "tests/integration/main.rs"
+
+[lints.rust]
+unsafe_code = "deny"

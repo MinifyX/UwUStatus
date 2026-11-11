@@ -1,6 +1,15 @@
 // Every call to the server.
 
-import type { Me, Methods, Settings } from './types';
+import type {
+  Channel,
+  ChannelInput,
+  DeliveryLog,
+  Me,
+  Methods,
+  Settings,
+  SmtpInput,
+  SmtpSettings,
+} from './types';
 
 export class ApiError extends Error {
   constructor(
@@ -81,6 +90,19 @@ export const api = {
 
   settings: () => request<Settings>('GET', '/api/settings'),
   saveSettings: (patch: Partial<Settings>) => request<Settings>('PUT', '/api/settings', patch),
+
+  channels: () => request<Channel[]>('GET', '/api/channels'),
+  createChannel: (input: ChannelInput) => request<Channel>('POST', '/api/channels', input),
+  saveChannel: (id: number, input: ChannelInput) =>
+    request<Channel>('PUT', `/api/channels/${id}`, input),
+  deleteChannel: (id: number) => request<void>('DELETE', `/api/channels/${id}`),
+  testChannel: (id: number) => request<void>('POST', `/api/channels/${id}/test`, {}),
+  channelLog: (id: number) => request<DeliveryLog[]>('GET', `/api/channels/${id}/log`),
+  monitorChannels: (id: number) => request<number[]>('GET', `/api/monitors/${id}/channels`),
+  saveMonitorChannels: (id: number, ids: number[]) =>
+    request<number[]>('PUT', `/api/monitors/${id}/channels`, ids),
+  smtp: () => request<SmtpSettings>('GET', '/api/smtp'),
+  saveSmtp: (input: SmtpInput) => request<SmtpSettings>('PUT', '/api/smtp', input),
 };
 
 /** Where the browser goes to sign in with UwUAuth; `next` is the path to come back to. */

@@ -3,12 +3,14 @@
 
 import { useEffect, useState, type MouseEvent } from 'react';
 
-export type Route = { name: 'overview' } | { name: 'settings' } | { name: 'notFound' };
+export type Route =
+  { name: 'overview' } | { name: 'settings' } | { name: 'notifications' } | { name: 'notFound' };
 
 export function parseRoute(pathname: string): Route {
   const parts = pathname.split('/').filter(Boolean);
   if (parts.length === 0) return { name: 'overview' };
   if (parts.length === 1 && parts[0] === 'settings') return { name: 'settings' };
+  if (parts.length === 1 && parts[0] === 'notifications') return { name: 'notifications' };
   return { name: 'notFound' };
 }
 
@@ -19,6 +21,8 @@ export function hrefOf(route: Route): string {
       return '/';
     case 'settings':
       return '/settings';
+    case 'notifications':
+      return '/notifications';
   }
 }
 

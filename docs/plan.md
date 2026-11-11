@@ -37,7 +37,7 @@ der Totmann.
 - Vorfälle entstehen automatisch **öffentlich** auf den Statusseiten der
   betroffenen Monitore, Text ergänzbar, schließen sich bei up.
 - Kanäle: SMTP (UwUMail), Webhook (JSON), Push-Dienst im UI wählbar
-  (ntfy, Gotify, Pushover), Discord, Telegram, SoChat.
+  (ntfy, Gotify, Pushover), Discord, Telegram.
 - Statusseiten: mehrere, eigene Domain je Seite (Host-Header), Nyu-Stimmung,
   90-Tage-Balken, Vorfälle, Wartung, RSS/Atom. Keine Cookies, keine Fremd-
   ressourcen.
@@ -53,7 +53,7 @@ der Totmann.
 2. [x] `uwustatus-probe` mit allen Typen + Tests gegen lokale Fakes.
 3. [x] Planer, Zustandsmaschine (Wiederholungen, Quorum, Eltern, Wartung),
        Speicherung + Verdichtung.
-4. [ ] Alarm-Kanäle.
+4. [x] Alarm-Kanäle (`uwustatus-notify`, Dispatcher, Seite „Benachrichtigungen“).
 5. [ ] Statusseiten, Vorfälle, RSS, Badges, API, `/metrics`.
 6. [ ] Tunnel + Satellit + Totmann + Notfall-Statusseite, Packaging wie Gateway.
 7. [ ] Web-UI komplett (Dashboard, Monitore, Kanäle, Seiten, Wartung,

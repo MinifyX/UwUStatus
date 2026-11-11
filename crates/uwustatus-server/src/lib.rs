@@ -1,7 +1,9 @@
 //! UwUStatus server: admin app, status pages, (later) scheduler and alerts.
 
+pub mod alerts;
 pub mod app;
 pub mod auth;
+pub mod channels;
 pub mod config;
 pub mod db;
 pub mod engine;

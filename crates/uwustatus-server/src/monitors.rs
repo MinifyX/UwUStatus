@@ -258,6 +258,7 @@ pub async fn create(
         )?;
         let id = c.last_insert_rowid();
         c.execute("INSERT INTO monitor_state (monitor_id, state, since) VALUES (?1, 'pending', ?2)", params![id, now])?;
+        crate::channels::assign_defaults(c, id)?;
         Ok(Ok(id))
     })?;
     let id = id.map_err(ApiError::invalid)?;

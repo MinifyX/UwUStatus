@@ -34,6 +34,7 @@ tower-http = { version = "0.6", features = ["timeout"] }
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", default-features = false, features = ["env-filter", "fmt", "ansi"] }
 url = "2"
+uwustatus-notify = { path = "../uwustatus-notify" }
 uwustatus-probe = { path = "../uwustatus-probe" }
 
 [dev-dependencies]

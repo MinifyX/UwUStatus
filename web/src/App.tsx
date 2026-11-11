@@ -17,6 +17,7 @@ import { api, loginUrl, UNAUTHENTICATED_EVENT } from './api/client';
 import type { Me, Methods, Settings } from './api/types';
 import { ButtonLink, Empty, ErrorBox, Link, Loading, PageHeader } from './components/ui';
 import { useStoredAppearance } from './lib/appearance';
+import { NotificationsPage } from './pages/Notifications';
 import { toasts, useAction, useResource } from './lib/hooks';
 import { useT, type Key, type Lang } from './lib/i18n';
 import { currentPath, hrefOf, navigate, useRoute, type Route } from './lib/router';
@@ -29,6 +30,7 @@ type Auth =
 
 const NAV: { route: Route; label: Key }[] = [
   { route: { name: 'overview' }, label: 'nav.overview' },
+  { route: { name: 'notifications' }, label: 'nav.notifications' },
   { route: { name: 'settings' }, label: 'nav.settings' },
 ];
 
@@ -307,6 +309,8 @@ function Page({ route }: { route: Route }) {
       );
     case 'settings':
       return <SettingsPage />;
+    case 'notifications':
+      return <NotificationsPage />;
     case 'notFound':
       return (
         <Empty

@@ -72,13 +72,17 @@ fn serve() -> Result<(), String> {
 }
 
 fn healthcheck() -> Result<(), String> {
-    let port = std::env::var("UWUSTATUS_BIND")
+    let mut addr = std::env::var("UWUSTATUS_BIND")
         .ok()
         .and_then(|b| b.parse::<std::net::SocketAddr>().ok())
-        .map_or(8080, |a| a.port());
+        .unwrap_or_else(|| ([127, 0, 0, 1], 8080).into());
+    // Bound to all interfaces → ask loopback; bound to one address → only that one answers.
+    if addr.ip().is_unspecified() {
+        addr.set_ip([127, 0, 0, 1].into());
+    }
     runtime()?.block_on(async {
         let response = reqwest::Client::new()
-            .get(format!("http://127.0.0.1:{port}/healthz"))
+            .get(format!("http://{addr}/healthz"))
             .timeout(std::time::Duration::from_secs(3))
             .send()
             .await

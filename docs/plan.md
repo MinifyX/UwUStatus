@@ -63,7 +63,7 @@ der Totmann.
 9. [x] Security-Review, Release 0.1.0, Deploy mfxdocker2 (Admin intern über
        caddy-internal, status.minifyx.de öffentlich), Kuma abgeschaltet,
        Produktlisten. Offen: Satellit auf dem Gateway-VPS (Installation durch
-       den Betreiber), OIDC/SMTP-Zugangsdaten.
+       den Betreiber), SMTP-Zugangsdaten.
 
 ## Bekannte Grenzen (0.1.0)
 

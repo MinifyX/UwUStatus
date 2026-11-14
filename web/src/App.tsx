@@ -6,6 +6,7 @@ import {
   Field,
   ICONS,
   Nyu,
+  revealFrom,
   TextInput,
   Toaster,
   Wordmark,
@@ -61,6 +62,18 @@ export function App() {
     return () => window.removeEventListener(UNAUTHENTICATED_EVENT, signedOut);
   }, [loadMe]);
 
+  // Once per sign-in (cold start counts, OIDC comes back as one): uncover the app from the visible logo.
+  const signedIn = auth.state === 'in';
+  useEffect(() => {
+    const root = document.getElementById('root');
+    if (!signedIn || !root) return;
+    const logos = [...document.querySelectorAll('[data-uwu-reveal-origin]')];
+    revealFrom(
+      root,
+      logos.find((el) => el.getClientRects().length > 0),
+    );
+  }, [signedIn]);
+
   useEffect(() => {
     window.scrollTo({ top: 0 });
     const page = navFor(route)?.label;
@@ -83,7 +96,9 @@ export function App() {
 
   return (
     <Shell me={auth.me} route={route} onLogout={() => void logout()}>
-      <Page route={route} me={auth.me} />
+      <div key={route.name} className="uwu-page">
+        <Page route={route} me={auth.me} />
+      </div>
     </Shell>
   );
 }

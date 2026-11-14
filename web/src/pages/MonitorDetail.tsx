@@ -1,7 +1,7 @@
 // One monitor: state per location, latency chart with range switch, events, pause/mute/delete.
 
-import { useState } from 'react';
-import { Button, Card, Dialog, Icon, ICONS, Segmented } from '@uwusuite/design';
+import { useState, type ReactNode } from 'react';
+import { Button, Card, CountUp, Dialog, Icon, ICONS, Segmented } from '@uwusuite/design';
 import { api, configOf } from '../api/client';
 import type { HistoryRange, Monitor, MonitorEvent } from '../api/types';
 import { LatencyChart } from '../components/LatencyChart';
@@ -83,10 +83,12 @@ export function MonitorDetail({ id }: { id: number }) {
   };
 
   const state = item?.state ?? 'pending';
-  const facts: { label: string; value: string }[] = [
+  const uptime = (percent: number | null | undefined) =>
+    percent == null ? '–' : <CountUp value={percent} format={(n) => formatUptime(n, lang)} />;
+  const facts: { label: string; value: ReactNode }[] = [
     { label: t('monitor.latency'), value: formatLatency(item?.latency_ms, lang) },
-    { label: t('monitor.uptime24h'), value: formatUptime(item?.uptime_24h, lang) },
-    { label: t('monitor.uptime30d'), value: formatUptime(item?.uptime_30d, lang) },
+    { label: t('monitor.uptime24h'), value: uptime(item?.uptime_24h) },
+    { label: t('monitor.uptime30d'), value: uptime(item?.uptime_30d) },
     {
       label: t('monitor.lastCheck'),
       value: item?.last_check ? formatAgo(item.last_check, now, lang) : '–',
@@ -154,7 +156,7 @@ export function MonitorDetail({ id }: { id: number }) {
       )}
       {m.description && <p className="m-0 mb-4 max-w-prose">{m.description}</p>}
 
-      <dl className="m-0 mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6">
+      <dl className="uwu-stagger m-0 mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6">
         {facts.map((f) => (
           <div key={f.label} className="rounded-card border border-hairline bg-surface px-4 py-3">
             <dt className="text-meta text-muted">{f.label}</dt>

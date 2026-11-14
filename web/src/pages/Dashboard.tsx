@@ -1,7 +1,7 @@
 // Overview: counters per state, search and tag filter, monitors grouped, polled every 10 s.
 
 import { useMemo, useState } from 'react';
-import { Icon, ICONS, Pill, TextInput } from '@uwusuite/design';
+import { CountUp, Icon, ICONS, Pill, TextInput } from '@uwusuite/design';
 import { api } from '../api/client';
 import type { MonState, OverviewItem } from '../api/types';
 import { Heartbeat, STATE, StateTag } from '../components/status';
@@ -71,7 +71,7 @@ export function Dashboard() {
       )}
       <section
         aria-label={t('overview.counts')}
-        className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-5"
+        className="uwu-stagger mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-5"
       >
         {COUNTED.map((s) => {
           const active = state === s;
@@ -87,7 +87,7 @@ export function Dashboard() {
             >
               <Icon icon={STATE[s].icon} size="md" className={iconTone(s)} />
               <span className="flex flex-col">
-                <span className="num text-title leading-none font-bold">{count(s)}</span>
+                <CountUp value={count(s)} className="num text-title leading-none font-bold" />
                 <span className="text-meta text-muted">{t(STATE[s].label)}</span>
               </span>
             </button>

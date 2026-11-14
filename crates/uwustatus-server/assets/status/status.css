@@ -151,6 +151,18 @@ footer a { color: var(--muted); }
   .axis .long { display: none; }
 }
 @media (min-width: 36.01rem) { .axis .short { display: none; } }
+/* Cards come in one after the other on load (design 1.15 uwu-stagger: 220 ms, 40 ms steps, capped at 8). */
+@keyframes rise { from { opacity: 0; transform: translateY(12px); } }
+@media (prefers-reduced-motion: no-preference) {
+  main > * { animation: rise 220ms cubic-bezier(0.2, 0.9, 0.3, 1) backwards; }
+  main > :nth-child(2) { animation-delay: 40ms; }
+  main > :nth-child(3) { animation-delay: 80ms; }
+  main > :nth-child(4) { animation-delay: 120ms; }
+  main > :nth-child(5) { animation-delay: 160ms; }
+  main > :nth-child(6) { animation-delay: 200ms; }
+  main > :nth-child(7) { animation-delay: 240ms; }
+  main > :nth-child(n + 8) { animation-delay: 280ms; }
+}
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }

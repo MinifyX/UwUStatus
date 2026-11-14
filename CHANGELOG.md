@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.0
+
+- Motion (subtle, off under reduced motion): the app uncovers itself from the logo once after signing in, the active sidebar entry slides as one pill, pages fade in, the overview counters and a monitor's uptime count up and its fact tiles come in one after the other.
+- Public status pages: the cards come in one after the other on load (CSS only, off under reduced motion).
+- Web app on `@uwusuite/design` 1.15.0.
+
 ## 0.1.0
 
 First release.

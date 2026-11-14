@@ -1,6 +1,6 @@
 {
   "name": "@uwustatus/web",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
   "license": "AGPL-3.0-only",
@@ -19,7 +19,7 @@
     "format:check": "prettier --check ."
   },
   "dependencies": {
-    "@uwusuite/design": "https://github.com/MinifyX/UwUSuite-Design/releases/download/v1.11.0/uwusuite-design-1.11.0.tgz",
+    "@uwusuite/design": "https://github.com/MinifyX/UwUSuite-Design/releases/download/v1.15.0/uwusuite-design-1.15.0.tgz",
     "lucide-react": "^1.52.0",
     "react": "^19.3.0",
     "react-dom": "^19.3.0"

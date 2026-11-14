@@ -2826,7 +2826,7 @@ dependencies = [
 
 [[package]]
 name = "uwustatus-notify"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "axum",
  "hmac",
@@ -2840,7 +2840,7 @@ dependencies = [
 
 [[package]]
 name = "uwustatus-probe"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "hickory-proto",
  "hickory-resolver",
@@ -2858,7 +2858,7 @@ dependencies = [
 
 [[package]]
 name = "uwustatus-satellite"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "axum",
  "clap",
@@ -2880,7 +2880,7 @@ dependencies = [
 
 [[package]]
 name = "uwustatus-server"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "argon2",
  "aws-lc-rs",
@@ -2915,7 +2915,7 @@ dependencies = [
 
 [[package]]
 name = "uwustatus-tunnel"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "aws-lc-rs",
  "data-encoding",

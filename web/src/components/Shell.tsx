@@ -1,7 +1,16 @@
 // The frame: sidebar from 1024 px, below that a top bar with a drawer (modal, Esc closes it).
 
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
-import { Button, Icon, IconButton, ICONS, Segmented, Toaster, Wordmark } from '@uwusuite/design';
+import {
+  Button,
+  Icon,
+  IconButton,
+  ICONS,
+  NavIndicator,
+  Segmented,
+  Toaster,
+  Wordmark,
+} from '@uwusuite/design';
 import type { LucideIcon } from 'lucide-react';
 import type { Me } from '../api/types';
 import { toasts } from '../lib/hooks';
@@ -140,7 +149,7 @@ export function Shell({
   }, [open]);
 
   const brand = (
-    <Link href="/" className="no-underline" aria-label={t('nav.home')}>
+    <Link href="/" className="no-underline" aria-label={t('nav.home')} data-uwu-reveal-origin>
       <Wordmark product="Status" shell="box" />
     </Link>
   );
@@ -159,6 +168,7 @@ export function Shell({
             {brand}
             <nav aria-label={t('nav.main')} className="flex-1">
               <NavList route={route} />
+              <NavIndicator />
             </nav>
             <Foot me={me} onLogout={onLogout} />
           </div>
@@ -199,6 +209,7 @@ export function Shell({
               </div>
               <nav aria-label={t('nav.main')} className="flex-1">
                 <NavList route={route} onGo={() => setOpen(false)} />
+                <NavIndicator />
               </nav>
               <Foot me={me} onLogout={onLogout} />
             </div>

@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.1
+
+- Accessibility: the notification history table announces its column headers correctly.
+- Forms: error and hint texts are linked to their fields by `@uwusuite/design` itself; fields with an error get the red border.
+- Web app on `@uwusuite/design` 1.16.0 (focus ring visible in high contrast mode, dialogs start focus on the first field, menus close on Tab, toasts pause on hover/focus).
+
 ## 0.2.0
 
 - Motion (subtle, off under reduced motion): the app uncovers itself from the logo once after signing in, the active sidebar entry slides as one pill, pages fade in, the overview counters and a monitor's uptime count up and its fact tiles come in one after the other.

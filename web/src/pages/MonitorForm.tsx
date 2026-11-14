@@ -108,11 +108,9 @@ function FormBody({ monitor }: { monitor: Monitor | null }) {
     } = {},
   ) => (
     <Field label={label} hint={opts.hint} error={err(key)} className={opts.className}>
-      {(fid, describedBy) => (
+      {(fid) => (
         <TextInput
           id={fid}
-          aria-describedby={describedBy}
-          aria-invalid={errors[key] ? true : undefined}
           value={String(d[key] ?? '')}
           placeholder={opts.placeholder}
           inputMode={opts.numeric ? 'numeric' : undefined}
@@ -187,11 +185,9 @@ function FormBody({ monitor }: { monitor: Monitor | null }) {
           </Field>
           {text('name', t('form.name'), { className: 'sm:col-span-2' })}
           <Field label={t('form.description')} error={err('description')} className="sm:col-span-2">
-            {(fid, describedBy) => (
+            {(fid) => (
               <TextArea
                 id={fid}
-                aria-describedby={describedBy}
-                aria-invalid={errors.description ? true : undefined}
                 rows={2}
                 value={d.description}
                 onChange={(e) => set('description', e.target.value)}
@@ -199,13 +195,11 @@ function FormBody({ monitor }: { monitor: Monitor | null }) {
             )}
           </Field>
           <Field label={t('form.group')} error={err('group')} hint={t('form.groupHint')}>
-            {(fid, describedBy) => (
+            {(fid) => (
               <>
                 <TextInput
                   id={fid}
                   list={`${fid}-groups`}
-                  aria-describedby={describedBy}
-                  aria-invalid={errors.group ? true : undefined}
                   value={d.group}
                   autoComplete="off"
                   onChange={(e) => set('group', e.target.value)}
@@ -373,13 +367,8 @@ function FormBody({ monitor }: { monitor: Monitor | null }) {
           {(http || mail) &&
             text('certWarn', t('form.certWarn'), { numeric: true, hint: t('form.certWarnHint') })}
           <Field label={t('form.parent')} hint={t('form.parentHint')} className="sm:col-span-2">
-            {(fid, describedBy) => (
-              <Select
-                id={fid}
-                aria-describedby={describedBy}
-                value={d.parentId}
-                onChange={(e) => set('parentId', e.target.value)}
-              >
+            {(fid) => (
+              <Select id={fid} value={d.parentId} onChange={(e) => set('parentId', e.target.value)}>
                 <option value="">{t('form.noParent')}</option>
                 {parents.map((p) => (
                   <option key={p.id} value={p.id}>

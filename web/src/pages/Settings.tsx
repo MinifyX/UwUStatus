@@ -109,12 +109,10 @@ function ServerSettings() {
                     : t('settings.range', { min: f.min, max: f.max })
                 }
               >
-                {(id, describedBy) => (
+                {(id) => (
                   <TextInput
                     id={id}
                     inputMode="numeric"
-                    aria-describedby={describedBy}
-                    aria-invalid={errors[f.key] ? true : undefined}
                     value={draft[f.key]}
                     onChange={(e) => setDraft({ ...draft, [f.key]: e.target.value })}
                   />

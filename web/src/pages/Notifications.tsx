@@ -274,12 +274,11 @@ function ChannelDialog({
               label={s.required ? label : t('notify.optional', { label })}
               hint={has ? t('notify.secretKeep') : undefined}
             >
-              {(id, describedBy) => (
+              {(id) => (
                 <TextInput
                   id={id}
                   type="password"
                   autoComplete="off"
-                  aria-describedby={describedBy}
                   required={s.required && !has}
                   placeholder={has ? '••••••••' : undefined}
                   value={secrets[s.key] ?? ''}
@@ -348,9 +347,15 @@ function LogDialog({ channel, onClose }: { channel: Channel; onClose: () => void
           <table className="w-full border-collapse text-left text-meta">
             <thead>
               <tr className="border-b border-hairline text-muted">
-                <th scope="col" className="py-2 pr-3 font-semibold">{t('notify.when')}</th>
-                <th scope="col" className="py-2 pr-3 font-semibold">{t('notify.event')}</th>
-                <th scope="col" className="py-2 font-semibold">{t('notify.result')}</th>
+                <th scope="col" className="py-2 pr-3 font-semibold">
+                  {t('notify.when')}
+                </th>
+                <th scope="col" className="py-2 pr-3 font-semibold">
+                  {t('notify.event')}
+                </th>
+                <th scope="col" className="py-2 font-semibold">
+                  {t('notify.result')}
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -455,12 +460,11 @@ function SmtpCard() {
             label={t('smtp.password')}
             hint={smtp.data?.password_set ? t('notify.secretKeep') : undefined}
           >
-            {(id, describedBy) => (
+            {(id) => (
               <TextInput
                 id={id}
                 type="password"
                 autoComplete="off"
-                aria-describedby={describedBy}
                 placeholder={smtp.data?.password_set ? '••••••••' : undefined}
                 value={draft.password ?? ''}
                 onChange={(e) =>

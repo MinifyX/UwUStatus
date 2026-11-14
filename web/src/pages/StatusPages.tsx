@@ -202,11 +202,9 @@ function PageEditor({ id }: { id: number | 'new' }) {
               hint={t('pages.slugHint')}
               error={slugBad ? t('pages.slugBad') : undefined}
             >
-              {(fid, describedBy) => (
+              {(fid) => (
                 <TextInput
                   id={fid}
-                  aria-describedby={describedBy}
-                  aria-invalid={slugBad || undefined}
                   value={draft.slug}
                   maxLength={50}
                   autoCapitalize="none"
@@ -227,10 +225,9 @@ function PageEditor({ id }: { id: number | 'new' }) {
               )}
             </Field>
             <Field label={t('pages.domains')} hint={t('pages.domainsHint')}>
-              {(fid, describedBy) => (
+              {(fid) => (
                 <TextArea
                   id={fid}
-                  aria-describedby={describedBy}
                   rows={3}
                   spellCheck={false}
                   placeholder="status.example.com"

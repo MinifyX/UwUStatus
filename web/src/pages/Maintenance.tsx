@@ -213,12 +213,10 @@ function MaintenanceBody({ existing }: { existing: Maintenance | null }) {
     hint?: string,
   ) => (
     <Field label={label} error={err(key)} hint={hint}>
-      {(fid, describedBy) => (
+      {(fid) => (
         <TextInput
           id={fid}
           type={type}
-          aria-describedby={describedBy}
-          aria-invalid={errors[key] ? true : undefined}
           inputMode={key === 'duration' ? 'numeric' : undefined}
           value={d[key]}
           autoComplete="off"
@@ -260,12 +258,10 @@ function MaintenanceBody({ existing }: { existing: Maintenance | null }) {
             error={err('description')}
             hint={t('maint.descriptionHint')}
           >
-            {(fid, describedBy) => (
+            {(fid) => (
               <TextArea
                 id={fid}
                 rows={3}
-                aria-describedby={describedBy}
-                aria-invalid={errors.description ? true : undefined}
                 value={d.description}
                 onChange={(e) => set('description', e.target.value)}
               />

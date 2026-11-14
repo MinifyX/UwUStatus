@@ -361,10 +361,9 @@ function IncidentDetail({ id }: { id: number }) {
         <Card title={t('incident.details')} icon={ICONS.edit}>
           <form className="flex flex-col gap-4" onSubmit={(e) => void save(e)}>
             <Field label={t('incident.title')} hint={t('incident.titleHint')}>
-              {(fid, describedBy) => (
+              {(fid) => (
                 <TextInput
                   id={fid}
-                  aria-describedby={describedBy}
                   placeholder={data.display_title}
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
@@ -496,10 +495,9 @@ function UpdateItem({
       {editing ? (
         <form className="mt-2 flex flex-col gap-2" onSubmit={(e) => void save(e)}>
           <Field label={t('incident.body')} hint={t('incident.bodyHint')}>
-            {(fid, describedBy) => (
+            {(fid) => (
               <TextArea
                 id={fid}
-                aria-describedby={describedBy}
                 rows={3}
                 placeholder={update.display_body}
                 value={body}
